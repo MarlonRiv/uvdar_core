@@ -134,6 +134,7 @@ add_library(frequency_classifier include/frequency_classifier/frequency_classifi
 add_library(color_selector include/color_selector/color_selector.cpp)
 # add_library(SignalSetter src/signal_setter.cpp)
 add_library(compute_lib include/compute_lib/compute_lib.c include/compute_lib/queue.c include/compute_lib/gl32_utils.c)
+add_library(uv_led_detect_adaptive include/detect/uv_led_detect_adaptive.cpp)
 
 target_link_libraries(compute_lib
   debug ${OpenGL_LIBRARIES} ${LIBGBM_LIBRARIES} ${catkin_LIBRARIES} ${LGBM} ${LEGL} ${LGL})
@@ -155,6 +156,9 @@ target_link_libraries(frequency_classifier
   debug ${OpenCV_LIBRARIES} ${catkin_LIBRARIES})
 
 target_link_libraries(color_selector
+  debug ${OpenCV_LIBRARIES} ${catkin_LIBRARIES})
+
+target_link_libraries(uv_led_detect_adaptive
   debug ${OpenCV_LIBRARIES} ${catkin_LIBRARIES})
 
 add_library(UVDARDetector src/detector.cpp)
@@ -197,6 +201,7 @@ target_link_libraries(UVDARDetector
   ${catkin_LIBRARIES}
   ${OpenCV_LIBRARIES}
   uv_led_detect_fast
+  uv_led_detect_adaptive
   compute_lib
   )
 

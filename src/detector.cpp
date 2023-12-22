@@ -20,6 +20,9 @@
 #include "detect/uv_led_detect_fast_cpu.h"
 #include "detect/uv_led_detect_fast_gpu.h"
 
+#include "detect/uv_led_detect_adaptive.h"
+
+
 namespace enc = sensor_msgs::image_encodings;
 
 namespace uvdar {
@@ -55,6 +58,19 @@ public:
     }
     _camera_count_ = (unsigned int)(_camera_topics.size());
 
+
+    // Load blinkers seen topics (if they are different from camera topics)
+    std::vector<std::string> _blinkers_seen_topics;
+    param_loader.loadParam("blinkers_seen_topics", _blinkers_seen_topics, std::vector<std::string>());
+    
+    /*
+     if (_blinkers_seen_topics.empty()) {
+      ROS_ERROR("[UVDARDetector]: No blinkers seen topics were supplied!");
+      return;
+    }
+    */
+   
+
     /* prepare masks if necessary //{ */
     param_loader.loadParam("use_masks", _use_masks_, bool(false));
     if (_use_masks_){
@@ -71,6 +87,10 @@ public:
       }
     }
     //}
+
+    /* create subscribers //{ */
+    //ros::Subscriber sub_blinkers_seen = nh_.subscribe("pub_blinkers_seen_", 1, &UVDARDetector::blinkersSeenCallback, this);
+
     
     // Create callbacks, timers and process objects for each camera
     for (unsigned int i = 0; i < _camera_count_; ++i) {
@@ -78,6 +98,16 @@ public:
         callbackImage(image_msg, image_index);
       };
       cals_image_.push_back(callback);
+
+    
+    for (unsigned int i = 0; i < _camera_count_; ++i) {
+      blinkers_seen_callback_t callback = [image_index=i, this] (const uvdar_core::ImagePointsWithFloatStampedConstPtr& points_msg) {
+        blinkersSeenCallback(points_msg, image_index);
+      };
+      cals_blinkers_seen_.push_back(callback);
+    }
+    
+
 
       timer_process_.push_back(ros::Timer());
 
@@ -103,6 +133,17 @@ public:
         ROS_ERROR("[UVDARDetector]: Failed to initialize FAST-based marker detection!");
         return;
       }
+
+      
+      ROS_INFO("[UVDARDetector]: Initializing ADAPTIVE-based marker detection...");
+      uvda_.push_back(std::make_unique<UVDARLedDetectAdaptive>(
+            50
+            ));
+      if (!uvda_.back()){
+        ROS_ERROR("[UVDARDetector]: Failed to initialize ADAPTIVE-based marker detection!");
+        return;
+      }
+      
     }
 
     // Subscribe to corresponding topics
@@ -110,6 +151,20 @@ public:
       sub_images_.push_back(nh_.subscribe(_camera_topics[i], 1, cals_image_[i]));
     }
 
+    // Subscribe to blinkers seen topics
+    for (size_t i = 0; i < _blinkers_seen_topics.size(); ++i) {
+      sub_blinkers_seen_.push_back(nh_.subscribe(_blinkers_seen_topics[i], 1, cals_blinkers_seen_[i]));
+    }
+
+    /*
+     for (size_t i = 0; i < _camera_topics.size(); ++i) {
+        sub_blinkers_seen_.push_back(nh_.subscribe(_camera_topics[i], 1, cals_blinkers_seen_[i]));
+    }
+    */
+   
+    //ros::Subscriber sub_blinkers_seen = nh_.subscribe(pub_blinkers_seen_topic, 1, &UVDARDetector::blinkersSeenCallback, this);
+
+    //TODO ASK ABOUT THIS _camera_topics load param
     //}
 
     
@@ -203,6 +258,20 @@ private:
     timer_process_[image_index] = nh.createTimer(ros::Duration(0), boost::bind(&UVDARDetector::processSingleImage, this, _1, image, image_index), true, true);
     camera_image_sizes_[image_index] = image->image.size();
   }
+
+  // Callback function for processing OMTA tracking points
+  void blinkersSeenCallback(const uvdar_core::ImagePointsWithFloatStampedConstPtr& msg,int image_index) {
+
+    trackingPoints.clear();    
+
+    for (const auto& point : msg->points) {
+        cv::Point2i cvPoint(static_cast<int>(point.x), static_cast<int>(point.y));
+        trackingPoints.push_back(cvPoint);
+    }
+  }
+
+
+
   //}
 
 
@@ -349,9 +418,17 @@ private:
   bool initialized_ = false;
 
   std::vector<ros::Subscriber> sub_images_;
+  std::vector<ros::Subscriber> sub_blinkers_seen_;
+
   unsigned int _camera_count_;
   using image_callback_t = boost::function<void (const sensor_msgs::ImageConstPtr&)>;
   std::vector<image_callback_t> cals_image_;
+
+
+  using blinkers_seen_callback_t = boost::function<void (const uvdar_core::ImagePointsWithFloatStampedConstPtr&)>;
+  std::vector<blinkers_seen_callback_t> cals_blinkers_seen_;
+
+  
 
 
   bool _publish_sun_points_ = false;
@@ -388,6 +465,10 @@ private:
   std::vector<std::unique_ptr<UVDARLedDetectFAST>> uvdf_;
   std::mutex  mutex_pub_;
   std::vector<ros::Timer> timer_process_;
+
+  std::vector<cv::Point2i> trackingPoints;
+  std::vector<std::unique_ptr<UVDARLedDetectAdaptive>> uvda_;
+
 
 };
 

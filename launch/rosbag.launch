@@ -10,7 +10,7 @@
 
   <arg name="threshold" default="100"/>
 
-  <arg name="calibrations_folder" default="$(find mrs_uav_general)/config/uvdar_calibrations"/>
+  <arg name="calibrations_folder" default="$(find mrs_uav_deployment)/config/uvdar_calibrations"/>
   
   <param name="use_sim_time" value="true"/>
 
@@ -102,6 +102,7 @@
       <!-- <rosparam param="camera_topics"> ["uav6/uvdar_bluefox/left/image_raw"] </rosparam> -->
       <rosparam param="camera_topics"> ["camera_left"] </rosparam>
       <rosparam param="points_seen_topics"> ["points_seen_left"] </rosparam>
+
 
       <param name="use_masks"         type="bool" value="false"/>
 
