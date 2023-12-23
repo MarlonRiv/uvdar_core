@@ -102,13 +102,16 @@
       <!-- <rosparam param="camera_topics"> ["uav6/uvdar_bluefox/left/image_raw"] </rosparam> -->
       <rosparam param="camera_topics"> ["camera_left"] </rosparam>
       <rosparam param="points_seen_topics"> ["points_seen_left"] </rosparam>
+      <rosparam param="blinkers_seen_topics"> ["blinkers_seen_back"] </rosparam>
 
+    
 
       <param name="use_masks"         type="bool" value="false"/>
 
       <remap from="~camera_left" to="/$(arg uav_name)/uvdar_bluefox/left/image_raw"/>
       <remap from="~points_seen_left" to="/$(arg uav_name)/uvdar/points_seen_left"/>
       <remap from="~points_seen_left/sun" to="/$(arg uav_name)/uvdar/points_seen_left/sun"/>
+      <remap from="~blinkers_seen_back" to="/$(arg uav_name)/uvdar/blinkers_seen_back"/>
 
       <remap from="~odometry" to="/$(arg uav_name)/mrs_odometry/new_odom"/>
       <remap from="~imu" to="mavros/imu/data"/>

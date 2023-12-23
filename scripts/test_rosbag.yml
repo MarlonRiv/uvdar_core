@@ -10,7 +10,7 @@ windows:
   - launch:
       layout: even-vertical
       panes:
-        - waitForRos; roslaunch uvdar_core rosbag.launch uav_name:=uav7 use_4DHT:=false debug:=true 
+        - waitForRos; roslaunch uvdar_core rosbag.launch uav_name:=uav7 use_4DHT:=false debug:=false
   # - kf:
       # layout: even-vertical
       # panes:

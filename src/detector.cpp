@@ -61,14 +61,19 @@ public:
 
     // Load blinkers seen topics (if they are different from camera topics)
     std::vector<std::string> _blinkers_seen_topics;
-    param_loader.loadParam("blinkers_seen_topics", _blinkers_seen_topics, std::vector<std::string>());
+    param_loader.loadParam("blinkers_seen_topics", _blinkers_seen_topics, _blinkers_seen_topics);
     
-    /*
-     if (_blinkers_seen_topics.empty()) {
+
+    if (_blinkers_seen_topics.empty()) {
       ROS_ERROR("[UVDARDetector]: No blinkers seen topics were supplied!");
       return;
+    } else {
+      ROS_INFO_STREAM("[UVDARDetector]: Blinkers seen topics: " << _blinkers_seen_topics.size());
     }
-    */
+  
+  
+
+    
    
 
     /* prepare masks if necessary //{ */
@@ -91,6 +96,14 @@ public:
     /* create subscribers //{ */
     //ros::Subscriber sub_blinkers_seen = nh_.subscribe("pub_blinkers_seen_", 1, &UVDARDetector::blinkersSeenCallback, this);
 
+    for (unsigned int i = 0; i < _blinkers_seen_topics.size(); ++i) {
+      blinkers_seen_callback_t callback = [image_index=i, this] (const uvdar_core::ImagePointsWithFloatStampedConstPtr& points_msg) {
+        blinkersSeenCallback(points_msg, image_index);
+      };
+      cals_blinkers_seen_.push_back(callback);
+      timer_process_tracking_.push_back(ros::Timer());
+    }
+
     
     // Create callbacks, timers and process objects for each camera
     for (unsigned int i = 0; i < _camera_count_; ++i) {
@@ -98,16 +111,6 @@ public:
         callbackImage(image_msg, image_index);
       };
       cals_image_.push_back(callback);
-
-    
-    for (unsigned int i = 0; i < _camera_count_; ++i) {
-      blinkers_seen_callback_t callback = [image_index=i, this] (const uvdar_core::ImagePointsWithFloatStampedConstPtr& points_msg) {
-        blinkersSeenCallback(points_msg, image_index);
-      };
-      cals_blinkers_seen_.push_back(callback);
-    }
-    
-
 
       timer_process_.push_back(ros::Timer());
 
@@ -119,6 +122,8 @@ public:
       sun_points_.push_back(std::vector<cv::Point>());
 
       mutex_camera_image_.push_back(std::make_unique<std::mutex>());
+
+      trackingPointsPerCamera.resize(_camera_count_);
 
       ROS_INFO("[UVDARDetector]: Initializing FAST-based marker detection...");
       uvdf_.push_back(std::make_unique<UVDARLedDetectFASTGPU>(
@@ -257,22 +262,59 @@ private:
     ros::NodeHandle nh("~");
     timer_process_[image_index] = nh.createTimer(ros::Duration(0), boost::bind(&UVDARDetector::processSingleImage, this, _1, image, image_index), true, true);
     camera_image_sizes_[image_index] = image->image.size();
+
+    //ROS_INFO_STREAM("[UVDARDetector]: Received image from camera " << image_index << " with size " << image->image.cols << "x" << image->image.rows << " and encoding " << image->encoding);
   }
 
   // Callback function for processing OMTA tracking points
   void blinkersSeenCallback(const uvdar_core::ImagePointsWithFloatStampedConstPtr& msg,int image_index) {
 
-    trackingPoints.clear();    
+    /*
+       //trackingPoints.clear();    
 
     for (const auto& point : msg->points) {
         cv::Point2i cvPoint(static_cast<int>(point.x), static_cast<int>(point.y));
         trackingPoints.push_back(cvPoint);
     }
+
+    ROS_INFO_STREAM("[UVDARDetector]: Tracking points: " << trackingPoints.size());
+    */
+    /*
+      if (image_index < trackingPointsPerCamera.size()) {
+      trackingPointsPerCamera[image_index].clear(); 
+
+      for (const auto& point : msg->points) {
+          cv::Point2i cvPoint(static_cast<int>(point.x), static_cast<int>(point.y));
+          trackingPointsPerCamera[image_index].push_back(cvPoint); 
+      }
+
+      ROS_INFO_STREAM("[UVDARDetector]: Camera " << image_index << " Tracking points: " << trackingPointsPerCamera[image_index].size());
+    }
+    */
+    ros::NodeHandle nh("~");
+    timer_process_tracking_[image_index] = nh.createTimer(ros::Duration(0), boost::bind(&UVDARDetector::processTrackingPoints, this, _1, msg, image_index), true, true);
+
+  //ROS_INFO_STREAM("[UVDARDetector]: Received tracking points from camera " << image_index);
+ 
   }
 
 
 
   //}
+
+
+  void processTrackingPoints(const ros::TimerEvent& te, const uvdar_core::ImagePointsWithFloatStampedConstPtr& msg, int image_index) {
+    if (image_index < trackingPointsPerCamera.size()) {
+      trackingPointsPerCamera[image_index].clear();
+
+      for (const auto& point : msg->points) {
+        cv::Point2i cvPoint(static_cast<int>(point.x), static_cast<int>(point.y));
+        trackingPointsPerCamera[image_index].push_back(cvPoint);
+      }
+
+      //ROS_INFO_STREAM("[UVDARDetector]: Camera " << image_index << " Tracking points: " << trackingPointsPerCamera[image_index].size());
+    }
+  }
 
 
   /* processSingleImage //{ */
@@ -288,6 +330,14 @@ private:
     if (!initialized_){
       ROS_WARN_STREAM_THROTTLE(1.0,"[UVDARDetector]: Not yet initialized, dropping message...");
       return;
+    }
+
+    if(trackingPoints.size() > 0){
+      ROS_INFO_STREAM("[UVDARDetector]: Tracking points: " << trackingPoints.size());  
+    }
+
+    if(trackingPointsPerCamera.size() > 0){
+      ROS_INFO_STREAM("[UVDARDetector]: Tracking points per camera: " << trackingPointsPerCamera[image_index].size());  
     }
 
     {
@@ -310,7 +360,7 @@ private:
       /* ROS_INFO_STREAM("Cam" << image_index << ". There are " << detected_points_[image_index].size() << " detected points."); */
 
       if (sun_points_[image_index].size() > 30){
-        ROS_ERROR_STREAM("There are " << sun_points_[image_index].size() << " detected potential sun points! Check your exposure!");
+        //ROS_ERROR_STREAM("There are " << sun_points_[image_index].size() << " detected potential sun points! Check your exposure!");
       }
       /* ROS_INFO_STREAM("There are " << sun_points_[image_index].size() << " detected potential sun points."); */
     }
@@ -466,7 +516,12 @@ private:
   std::mutex  mutex_pub_;
   std::vector<ros::Timer> timer_process_;
 
+
+  std::vector<ros::Timer> timer_process_tracking_;
+
+
   std::vector<cv::Point2i> trackingPoints;
+  std::vector<std::vector<cv::Point2i>> trackingPointsPerCamera;
   std::vector<std::unique_ptr<UVDARLedDetectAdaptive>> uvda_;
 
 
