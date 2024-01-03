@@ -126,6 +126,8 @@ uvdar::UVDARLedDetectFASTGPU::~UVDARLedDetectFASTGPU() {
   }
 }
 
+
+
 bool uvdar::UVDARLedDetectFASTGPU::processImage(const cv::Mat i_image, std::vector<cv::Point2i>& detected_points, std::vector<cv::Point2i>& sun_points, int mask_id) {
   detected_points = std::vector<cv::Point2i>();
   sun_points = std::vector<cv::Point2i>();

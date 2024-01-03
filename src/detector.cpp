@@ -59,7 +59,7 @@ public:
     _camera_count_ = (unsigned int)(_camera_topics.size());
 
 
-    // Load blinkers seen topics (if they are different from camera topics)
+    // Load blinkers seen topics
     std::vector<std::string> _blinkers_seen_topics;
     param_loader.loadParam("blinkers_seen_topics", _blinkers_seen_topics, _blinkers_seen_topics);
     
@@ -96,6 +96,7 @@ public:
     /* create subscribers //{ */
     //ros::Subscriber sub_blinkers_seen = nh_.subscribe("pub_blinkers_seen_", 1, &UVDARDetector::blinkersSeenCallback, this);
 
+    
     for (unsigned int i = 0; i < _blinkers_seen_topics.size(); ++i) {
       blinkers_seen_callback_t callback = [image_index=i, this] (const uvdar_core::ImagePointsWithFloatStampedConstPtr& points_msg) {
         blinkersSeenCallback(points_msg, image_index);
@@ -124,6 +125,8 @@ public:
       mutex_camera_image_.push_back(std::make_unique<std::mutex>());
 
       trackingPointsPerCamera.resize(_camera_count_);
+      adaptive_detected_points_.push_back(std::vector<cv::Point2i>());
+
 
       ROS_INFO("[UVDARDetector]: Initializing FAST-based marker detection...");
       uvdf_.push_back(std::make_unique<UVDARLedDetectFASTGPU>(
@@ -142,7 +145,8 @@ public:
       
       ROS_INFO("[UVDARDetector]: Initializing ADAPTIVE-based marker detection...");
       uvda_.push_back(std::make_unique<UVDARLedDetectAdaptive>(
-            50
+            25,
+            5.0
             ));
       if (!uvda_.back()){
         ROS_ERROR("[UVDARDetector]: Failed to initialize ADAPTIVE-based marker detection!");
@@ -266,8 +270,10 @@ private:
     //ROS_INFO_STREAM("[UVDARDetector]: Received image from camera " << image_index << " with size " << image->image.cols << "x" << image->image.rows << " and encoding " << image->encoding);
   }
 
+
+
   // Callback function for processing OMTA tracking points
-  void blinkersSeenCallback(const uvdar_core::ImagePointsWithFloatStampedConstPtr& msg,int image_index) {
+  void blinkersSeenCallback(const uvdar_core::ImagePointsWithFloatStampedConstPtr& points_msg,int image_index) {
 
     /*
        //trackingPoints.clear();    
@@ -292,7 +298,7 @@ private:
     }
     */
     ros::NodeHandle nh("~");
-    timer_process_tracking_[image_index] = nh.createTimer(ros::Duration(0), boost::bind(&UVDARDetector::processTrackingPoints, this, _1, msg, image_index), true, true);
+    timer_process_tracking_[image_index] = nh.createTimer(ros::Duration(0), boost::bind(&UVDARDetector::processTrackingPoints, this, _1, points_msg, image_index), true, true);
 
   //ROS_INFO_STREAM("[UVDARDetector]: Received tracking points from camera " << image_index);
  
@@ -337,7 +343,27 @@ private:
     }
 
     if(trackingPointsPerCamera.size() > 0){
-      ROS_INFO_STREAM("[UVDARDetector]: Tracking points per camera: " << trackingPointsPerCamera[image_index].size());  
+       
+      ROS_INFO_STREAM("[UVDARDetector]: Tracking points per camera: " << trackingPointsPerCamera[image_index].size()); 
+
+      //Print the points
+      for (int i = 0; i < trackingPointsPerCamera[image_index].size(); i++) {
+        ROS_INFO_STREAM("[UVDARDetector]: Tracking point " << i << ": " << trackingPointsPerCamera[image_index][i]);
+      }
+
+
+      if( ! (uvda_[image_index]->processImageAdaptive(
+              image->image,
+              trackingPointsPerCamera[image_index],
+              adaptive_detected_points_[image_index]
+              )
+            )
+          ){
+        ROS_ERROR_STREAM("Failed to extract markers from the image!");
+        return;
+      }
+      
+ 
     }
 
     {
@@ -523,6 +549,7 @@ private:
   std::vector<cv::Point2i> trackingPoints;
   std::vector<std::vector<cv::Point2i>> trackingPointsPerCamera;
   std::vector<std::unique_ptr<UVDARLedDetectAdaptive>> uvda_;
+  std::vector<std::vector<cv::Point2i>> adaptive_detected_points_;
 
 
 };
