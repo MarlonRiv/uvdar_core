@@ -7,12 +7,11 @@ UVDARLedDetectAdaptive::UVDARLedDetectAdaptive(int neighborhoodSize, double poin
 
 UVDARLedDetectAdaptive::~UVDARLedDetectAdaptive() {}
 
-bool UVDARLedDetectAdaptive::processImageAdaptive(const cv::Mat& inputImage, const std::vector<cv::Point2i>& trackingPoints, std::vector<cv::Point2i>& detectedPoints) {
+bool UVDARLedDetectAdaptive::processImageAdaptive(const cv::Mat& inputImage, const std::vector<cv::Point2i>& trackingPoints, std::vector<cv::Point2i>& detectedPoints, const std::vector<cv::Point2i>& standardPoints) {
     // Reset detected points
     detectedPoints.clear();
-
-    // Create a mask from the result of static binarization (to be implemented)
-    cv::Mat initialMask; // Placeholder for initial static binarization mask
+    lastProcessedBinaryROIs_.clear();
+    lastProcessedROIs_.clear();
 
     // Process each tracking point
     for (const auto& point : trackingPoints) {
@@ -21,13 +20,12 @@ bool UVDARLedDetectAdaptive::processImageAdaptive(const cv::Mat& inputImage, con
         detectedPoints.insert(detectedPoints.end(), roiDetectedPoints.begin(), roiDetectedPoints.end());
     }
 
-    // Merge the detected points with the standard points
-    //std::vector<cv::Point2i> final_detected_points = mergePoints(detectedPoints, standardPoints, point_similarity_threshold_);
+      // Merge the detected points with the standard points
+    //combinedPoints = mergePoints(detectedPoints, standardPoints, point_similarity_threshold_);
+    std::vector<cv::Point2i> final_detected_points = mergePoints(detectedPoints, standardPoints, point_similarity_threshold_);
+    //combinedPoints.insert(combinedPoints.end(), final_detected_points.begin(), final_detected_points.end());
 
-    // Process the final image to detect points (to be implemented)
-    // Example: detectPointsFromMask(initialMask, detectedPoints);
-
-    return true;// Return true if successful
+    return true;//if successful
 }
 
 std::vector<cv::Point2i> UVDARLedDetectAdaptive::applyAdaptiveThreshold(const cv::Mat& image, const cv::Point2i& point, int neighborhoodSize) {
@@ -47,6 +45,8 @@ std::vector<cv::Point2i> UVDARLedDetectAdaptive::applyAdaptiveThreshold(const cv
 
     cv::Rect roi(x, y, width, height);
 
+    lastProcessedROIs_.push_back(roi);
+
     //cv::Rect roi(point.x - neighborhoodSize, point.y - neighborhoodSize, 2 * neighborhoodSize, 2 * neighborhoodSize);
     cv::Mat roiImage = grayImage(roi);
 
@@ -54,11 +54,13 @@ std::vector<cv::Point2i> UVDARLedDetectAdaptive::applyAdaptiveThreshold(const cv
     //cv::adaptiveThreshold(roiImage, binaryRoi, 255, cv::ADAPTIVE_THRESH_GAUSSIAN_C, cv::THRESH_BINARY, 11, 2);
     cv::threshold(roiImage, binaryRoi, 0, 255, cv::THRESH_BINARY | cv::THRESH_OTSU);
 
-    std::cout << "[UVDARLedDetectAdaptive]: ROI PROCESSED  Roi size: " << binaryRoi.size() << ", " << binaryRoi.type() << std::endl;
+    // Store the binary ROI (For debugging/visualization)
+    lastProcessedBinaryROIs_.push_back(binaryRoi);
+    //std::cout << "[UVDARLedDetectAdaptive]: ROI PROCESSED  Roi size: " << binaryRoi.size() << ", " << binaryRoi.type() << std::endl;
 
     // Detect points within this ROI
     std::vector<cv::Point2i> roiDetectedPoints = detectPointsFromRoi(binaryRoi, roi);
-    std::cout << "[UVDARLedDetectAdaptive]: ADDING ROI DETECTED POINTS: " << roiDetectedPoints.size() << std::endl;
+    //std::cout << "[UVDARLedDetectAdaptive]: ADDING ROI DETECTED POINTS: " << roiDetectedPoints.size() << std::endl;
     return roiDetectedPoints;
 }
 
@@ -93,7 +95,7 @@ bool  UVDARLedDetectAdaptive::isClose(const cv::Point2i& p1, const cv::Point2i& 
 }
 
 std::vector<cv::Point2i> UVDARLedDetectAdaptive::mergePoints(const std::vector<cv::Point2i>& adaptivePoints,
-                                     const std::vector<cv::Point2i>& standardPoints, double point_similarity_threshold) {
+                                     const std::vector<cv::Point2i>& standardPoints, double threshold) {
     std::vector<cv::Point2i> combinedPoints;
 
     // Add all adaptive points
@@ -103,7 +105,7 @@ std::vector<cv::Point2i> UVDARLedDetectAdaptive::mergePoints(const std::vector<c
     for (const auto& standardPoint : standardPoints) {
         bool isOverlap = false;
         for (const auto& adaptivePoint : adaptivePoints) {
-            if (isClose(standardPoint, adaptivePoint, point_similarity_threshold)) {
+            if (isClose(standardPoint, adaptivePoint, point_similarity_threshold_)) {
                 isOverlap = true;
                 break;
             }
@@ -113,7 +115,56 @@ std::vector<cv::Point2i> UVDARLedDetectAdaptive::mergePoints(const std::vector<c
         }
     }
 
+    //Print final size of combined points
+    //std::cout << "[UVDARLedDetectAdaptive]: COMBINED POINTS SIZE: " << combinedPoints.size() << std::endl;
+
     return combinedPoints;
+}
+
+
+
+void UVDARLedDetectAdaptive::generateVisualizationAdaptive(const cv::Mat& inputImage,cv::Mat& visualization_image, const std::vector<cv::Point2i>& detectedPoints) {
+
+
+    // Create a copy of the current image for visualization
+    visualization_image = inputImage.clone();
+
+
+    // Check if the image is not empty
+    if (visualization_image.empty()) {
+        return;
+    }
+
+    // Overlay binary ROIs
+    for (size_t i = 0; i < lastProcessedBinaryROIs_.size(); i++) {
+        const auto& binaryRoi = lastProcessedBinaryROIs_[i];
+        const auto& roi = lastProcessedROIs_[i];
+
+        // Ensure the ROI is within the bounds of the image
+        cv::Rect imageBounds(0, 0, visualization_image.cols, visualization_image.rows);
+        if (imageBounds.contains(cv::Point(roi.x, roi.y)) && 
+            imageBounds.contains(cv::Point(roi.x + roi.width, roi.y + roi.height))) {
+
+            // Overlay the binary ROI
+            binaryRoi.copyTo(visualization_image(roi));
+
+            // Optionally draw a rectangle around the ROI
+            cv::rectangle(visualization_image, roi, cv::Scalar(0, 255, 0)); // Green rectangle
+
+            
+            //    // Draw detected points within this ROI
+            //for (const auto& point : detectedPoints) {
+            //    cv::circle(visualization_image, point, 3, cv::Scalar(0, 0, 255), -1); // Red circle for each point
+            //}
+            
+            
+         
+        }
+    }
+    
+    
+
+
 }
 
 

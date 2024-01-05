@@ -22,6 +22,8 @@
 
 #include "detect/uv_led_detect_adaptive.h"
 
+#include <sensor_msgs/Image.h>
+
 
 namespace enc = sensor_msgs::image_encodings;
 
@@ -119,6 +121,8 @@ public:
 
       images_current_.push_back(cv::Mat());
 
+      image_visualization_ = cv::Mat();
+
       detected_points_.push_back(std::vector<cv::Point>());
       sun_points_.push_back(std::vector<cv::Point>());
 
@@ -196,7 +200,11 @@ public:
       }
     }
 
+     // Create a publisher for the visualization images
+    image_pub_ = nh_.advertise<sensor_msgs::Image>("visualization_image", 1);
+
     if (_publish_visualization_){
+      ROS_INFO_STREAM("[UVDARDetector]: Publishing visualization.");
       pub_visualization_ = std::make_unique<mrs_lib::ImagePublisher>(boost::make_shared<ros::NodeHandle>(nh_));
     }
     //}
@@ -323,6 +331,21 @@ private:
   }
 
 
+  void publishVisualizationImage(const cv::Mat& visualization_image) {
+    if (!visualization_image.empty()) {
+        // Convert OpenCV image to ROS message
+        cv_bridge::CvImage cv_image;
+        cv_image.image = visualization_image;
+        cv_image.encoding = "mono8"; //  image is grayscale
+        sensor_msgs::Image ros_image;
+        cv_image.toImageMsg(ros_image);
+
+        // Publish the image
+        image_pub_.publish(ros_image);
+    }
+  }
+
+
   /* processSingleImage //{ */
 
   /**
@@ -338,41 +361,36 @@ private:
       return;
     }
 
-    if(trackingPoints.size() > 0){
+
+    /*
+      if(trackingPoints.size() > 0){
       ROS_INFO_STREAM("[UVDARDetector]: Tracking points: " << trackingPoints.size());  
     }
+    */
+  
 
-    if(trackingPointsPerCamera.size() > 0){
+    if(trackingPointsPerCamera[image_index].size() > 0){
        
       ROS_INFO_STREAM("[UVDARDetector]: Tracking points per camera: " << trackingPointsPerCamera[image_index].size()); 
 
+      /*
       //Print the points
       for (int i = 0; i < trackingPointsPerCamera[image_index].size(); i++) {
         ROS_INFO_STREAM("[UVDARDetector]: Tracking point " << i << ": " << trackingPointsPerCamera[image_index][i]);
       }
-
-
-      if( ! (uvda_[image_index]->processImageAdaptive(
-              image->image,
-              trackingPointsPerCamera[image_index],
-              adaptive_detected_points_[image_index]
-              )
-            )
-          ){
-        ROS_ERROR_STREAM("Failed to extract markers from the image!");
-        return;
-      }
+      */
+  
       
- 
-    }
+      {
+        std::scoped_lock lock(*mutex_camera_image_[image_index]);
+        images_current_[image_index] = image->image;
+        sun_points_[image_index].clear();
+        detected_points_[image_index].clear();
+        adaptive_detected_points_[image_index].clear();
 
-    {
-      std::scoped_lock lock(*mutex_camera_image_[image_index]);
-      images_current_[image_index] = image->image;
-      sun_points_[image_index].clear();
-      detected_points_[image_index].clear();
 
-      if ( ! (uvdf_[image_index]->processImage(
+
+        if ( ! (uvdf_[image_index]->processImage(
               image->image,
               detected_points_[image_index],
               sun_points_[image_index],
@@ -382,14 +400,65 @@ private:
          ){
         ROS_ERROR_STREAM("Failed to extract markers from the image!");
         return;
-      }
-      /* ROS_INFO_STREAM("Cam" << image_index << ". There are " << detected_points_[image_index].size() << " detected points."); */
+        }
 
-      if (sun_points_[image_index].size() > 30){
-        //ROS_ERROR_STREAM("There are " << sun_points_[image_index].size() << " detected potential sun points! Check your exposure!");
+        if( ! (uvda_[image_index]->processImageAdaptive(
+                image->image,
+                trackingPointsPerCamera[image_index],
+                adaptive_detected_points_[image_index],
+                detected_points_[image_index]
+                )
+              )
+            ){
+          ROS_ERROR_STREAM("Failed to extract markers from the image!");
+          return;
+        }
+
+
+        cv::Mat visualization_image;
+        uvda_[image_index]->generateVisualizationAdaptive(image->image,visualization_image,adaptive_detected_points_[image_index]);
+        publishVisualizationImage(visualization_image);
+
       }
-      /* ROS_INFO_STREAM("There are " << sun_points_[image_index].size() << " detected potential sun points."); */
+     
+ 
     }
+    else{
+      
+      ROS_INFO_STREAM("[UVDARDetector]: No tracking points for camera " << image_index);
+
+      {
+        std::scoped_lock lock(*mutex_camera_image_[image_index]);
+        images_current_[image_index] = image->image;
+        sun_points_[image_index].clear();
+        detected_points_[image_index].clear();
+
+
+        if ( ! (uvdf_[image_index]->processImage(
+                image->image,
+                detected_points_[image_index],
+                sun_points_[image_index],
+                _use_masks_?image_index:-1
+                )
+              )
+          ){
+          ROS_ERROR_STREAM("Failed to extract markers from the image!");
+          return;
+        }
+        /* ROS_INFO_STREAM("Cam" << image_index << ". There are " << detected_points_[image_index].size() << " detected points."); */
+
+        if (sun_points_[image_index].size() > 30){
+          //ROS_ERROR_STREAM("There are " << sun_points_[image_index].size() << " detected potential sun points! Check your exposure!");
+        }
+        /* ROS_INFO_STREAM("There are " << sun_points_[image_index].size() << " detected potential sun points."); */
+      }
+
+    }
+
+    ROS_INFO_STREAM("Cam" << image_index << ". There are " << detected_points_[image_index].size() << " detected points.");
+    ROS_INFO_STREAM("Cam" << image_index << ". There are " << adaptive_detected_points_[image_index].size() << " detected adaptive points.");
+
+
 
     if (detected_points_[image_index].size()>MAX_POINTS_PER_IMAGE){
       ROS_WARN_STREAM("[UVDARDetector]: Over " << MAX_POINTS_PER_IMAGE << " points received. Skipping noisy image.");
@@ -434,6 +503,8 @@ private:
       generateVisualization(image_visualization_);
       if ((image_visualization_.cols != 0) && (image_visualization_.rows != 0)){
         if (_publish_visualization_){
+
+          ROS_INFO_STREAM("[UVDARDetector]: Publishing visualization.");
           pub_visualization_->publish("uvdar_detection_visualization", 0.01, image_visualization_, true);
         }
         if (_gui_){
@@ -468,6 +539,22 @@ private:
       cv::Mat image_rgb;
       cv::cvtColor(images_current_[image_index], image_rgb, cv::COLOR_GRAY2BGR);
       image_rgb.copyTo(output_image(cv::Rect(start_point.x,0,images_current_[image_index].cols,images_current_[image_index].rows)));
+
+      /*
+
+        // Overlay binary ROIs
+      const auto& binaryROIs = uvda_[image_index]->getLastProcessedBinaryROIs();
+      const auto& rois = uvda_[image_index]->getLastProcessedROIs();
+      
+      for (size_t i = 0; i < binaryROIs.size(); ++i) {
+          const auto& binaryRoi = binaryROIs[i];
+          const auto& roi = rois[i];
+          binaryRoi.copyTo(output_image(roi)); // Overlay binary ROI
+      }
+      
+      */
+    
+
 
       for (int j = 0; j < (int)(detected_points_[image_index].size()); j++) {
         cv::circle(output_image, detected_points_[image_index][j]+start_point, 5, cv::Scalar(255,0,0));
@@ -512,6 +599,8 @@ private:
   std::vector<ros::Publisher> pub_sun_points_;
   std::vector<ros::Publisher> pub_candidate_points_;
 
+  ros::Publisher image_pub_;
+
 
   bool _debug_;
 
@@ -550,6 +639,7 @@ private:
   std::vector<std::vector<cv::Point2i>> trackingPointsPerCamera;
   std::vector<std::unique_ptr<UVDARLedDetectAdaptive>> uvda_;
   std::vector<std::vector<cv::Point2i>> adaptive_detected_points_;
+  std::vector<std::vector<cv::Point2i>> combinedPoints_;
 
 
 };

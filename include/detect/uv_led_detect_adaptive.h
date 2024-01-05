@@ -12,7 +12,17 @@ public:
     UVDARLedDetectAdaptive(int neighborhoodSize = 25, double point_similarity_threshold = 5.0);
     ~UVDARLedDetectAdaptive();
 
-    bool processImageAdaptive(const cv::Mat& inputImage, const std::vector<cv::Point2i>& trackingPoints, std::vector<cv::Point2i>& detectedPoints);
+    bool processImageAdaptive(const cv::Mat& inputImage, const std::vector<cv::Point2i>& trackingPoints, std::vector<cv::Point2i>& detectedPoints, const std::vector<cv::Point2i>& standardPoints);
+
+    void generateVisualizationAdaptive(const cv::Mat& inputImage,cv::Mat& visualization_image,const std::vector<cv::Point2i>& detectedPoints);
+
+    const std::vector<cv::Mat>& getLastProcessedBinaryROIs() const {
+      return lastProcessedBinaryROIs_;
+    }
+
+    const std::vector<cv::Rect>& getLastProcessedROIs() const {
+      return lastProcessedROIs_;
+    }
 
 private:
     std::vector<cv::Point2i> applyAdaptiveThreshold(const cv::Mat& image, const cv::Point2i& point, int neighborhoodSize);
@@ -25,6 +35,9 @@ private:
 
     int neighborhoodSize_;
     double point_similarity_threshold_;
+    std::vector<cv::Mat> lastProcessedBinaryROIs_;
+    std::vector<cv::Rect> lastProcessedROIs_; // For storing ROI positions
+    std::vector<cv::Point2i> allRoiDetectedPoints;// For storing ROI positions
 };
 
 } // namespace uvdar
