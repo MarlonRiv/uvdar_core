@@ -27,6 +27,7 @@ windows:
         # - rosbag record -O rosbags/second/omta_1.bag -e "(.*)_camp"
         # - rosbag record -O rosbags/second/omta_2.bag -e "(.*)_camp"
         # - rosbag record -O rosbags/third/omta.bag -e "(.*)_camp"
+        - waitForRos; sleep 3; rqt_image_view
   - play:
       layout: even-vertical
       panes:
@@ -37,6 +38,10 @@ windows:
         - waitForRos; sleep 3; rosbag play --clock ~/Desktop/MRS_Master_Project/experiments/diff_power_5m_check.bag
         # - waitForRos; sleep 3; rosbag play --clock ~/experiments/19_04/demo_first/rx1/all_three/rx1.bag
 
+  - topics:
+      layout: even-vertical
+      panes:
+        - waitForRos; sleep 3; rostopic echo /uav7/uvdar/blinkers_seen_back
 
  # - waitForCompile; cd ~/uvdar_rosbag/tracking/uav7/22_2021_04_27_09_11_19_L12/ ; rosbag play --clock -s 30 _2021-04-27-09-11-56.bag
   # - trajectory:

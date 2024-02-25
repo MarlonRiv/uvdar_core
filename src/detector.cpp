@@ -73,11 +73,6 @@ public:
       ROS_INFO_STREAM("[UVDARDetector]: Blinkers seen topics: " << _blinkers_seen_topics.size());
     }
   
-  
-
-    
-   
-
     /* prepare masks if necessary //{ */
     param_loader.loadParam("use_masks", _use_masks_, bool(false));
     if (_use_masks_){
@@ -129,7 +124,7 @@ public:
       mutex_camera_image_.push_back(std::make_unique<std::mutex>());
 
       trackingPointsPerCamera.resize(_camera_count_);
-      adaptive_detected_points_.push_back(std::vector<cv::Point2i>());
+      adaptive_detected_points_.push_back(std::vector<cv::Point>());
 
 
       ROS_INFO("[UVDARDetector]: Initializing FAST-based marker detection...");
@@ -149,7 +144,7 @@ public:
       
       ROS_INFO("[UVDARDetector]: Initializing ADAPTIVE-based marker detection...");
       uvda_.push_back(std::make_unique<UVDARLedDetectAdaptive>(
-            25,
+            15,
             5.0
             ));
       if (!uvda_.back()){
@@ -322,7 +317,9 @@ private:
       trackingPointsPerCamera[image_index].clear();
 
       for (const auto& point : msg->points) {
-        cv::Point2i cvPoint(static_cast<int>(point.x), static_cast<int>(point.y));
+        //cv::Point cvPoint(static_cast<int>(point.x), static_cast<int>(point.y));
+        //Without casting
+        cv::Point cvPoint(point.x, point.y);
         trackingPointsPerCamera[image_index].push_back(cvPoint);
       }
 
@@ -372,13 +369,20 @@ private:
     if(trackingPointsPerCamera[image_index].size() > 0){
        
       ROS_INFO_STREAM("[UVDARDetector]: Tracking points per camera: " << trackingPointsPerCamera[image_index].size()); 
+      received_tracking_points_ = true;
 
-      /*
+
+      
       //Print the points
       for (int i = 0; i < trackingPointsPerCamera[image_index].size(); i++) {
         ROS_INFO_STREAM("[UVDARDetector]: Tracking point " << i << ": " << trackingPointsPerCamera[image_index][i]);
       }
-      */
+      
+      
+      
+      
+    
+      
   
       
       {
@@ -402,6 +406,16 @@ private:
         return;
         }
 
+
+        /*
+             //Print the standard points
+        for (int i = 0; i < detected_points_[image_index].size(); i++) {
+          ROS_INFO_STREAM("[UVDARDetector]: Standard detected point " << i << ": " << detected_points_[image_index][i]);
+        }
+        
+        
+        */
+
         if( ! (uvda_[image_index]->processImageAdaptive(
                 image->image,
                 trackingPointsPerCamera[image_index],
@@ -410,15 +424,31 @@ private:
                 )
               )
             ){
-          ROS_ERROR_STREAM("Failed to extract markers from the image!");
+          ROS_ERROR_STREAM("Failed to extract markers adaptively from the image!");
           return;
         }
 
 
+
+        /*
+
+           //Print the adaptive points
+        
+        for (int i = 0; i < adaptive_detected_points_[image_index].size(); i++) {
+          ROS_INFO_STREAM("[UVDARDetector]: Adaptive detected point " << i << ": " << adaptive_detected_points_[image_index][i]);
+        }  
+        
+        
+        
+        */
+
         cv::Mat visualization_image;
+        
         uvda_[image_index]->generateVisualizationAdaptive(image->image,visualization_image,adaptive_detected_points_[image_index]);
         publishVisualizationImage(visualization_image);
 
+
+      
       }
      
  
@@ -426,6 +456,7 @@ private:
     else{
       
       ROS_INFO_STREAM("[UVDARDetector]: No tracking points for camera " << image_index);
+      received_tracking_points_ = false;
 
       {
         std::scoped_lock lock(*mutex_camera_image_[image_index]);
@@ -455,11 +486,13 @@ private:
 
     }
 
-    ROS_INFO_STREAM("Cam" << image_index << ". There are " << detected_points_[image_index].size() << " detected points.");
-    ROS_INFO_STREAM("Cam" << image_index << ". There are " << adaptive_detected_points_[image_index].size() << " detected adaptive points.");
+    //ROS_INFO_STREAM("Cam" << image_index << ". There are " << detected_points_[image_index].size() << " detected points.");
+    //ROS_INFO_STREAM("Cam" << image_index << ". There are " << adaptive_detected_points_[image_index].size() << " detected adaptive points.");
 
+ 
 
-
+   
+  
     if (detected_points_[image_index].size()>MAX_POINTS_PER_IMAGE){
       ROS_WARN_STREAM("[UVDARDetector]: Over " << MAX_POINTS_PER_IMAGE << " points received. Skipping noisy image.");
       return;
@@ -472,6 +505,7 @@ private:
         msg_sun.stamp = image->header.stamp;
         msg_sun.image_width = image->image.cols;
         msg_sun.image_height = image->image.rows;
+
         for (auto& sun_point : sun_points_[image_index]) {
           uvdar_core::Point2DWithFloat point;
           point.x = sun_point.x;
@@ -481,6 +515,40 @@ private:
         pub_sun_points_[image_index].publish(msg_sun);
       }
 
+
+      /*
+
+
+      if (received_tracking_points_){
+        uvdar_core::ImagePointsWithFloatStamped msg_detected;
+        msg_detected.stamp = image->header.stamp;
+        msg_detected.image_width = image->image.cols;
+        msg_detected.image_height = image->image.rows;
+        for (auto& detected_point : adaptive_detected_points_[image_index]) {
+          uvdar_core::Point2DWithFloat point;
+          point.x = detected_point.x;
+          point.y = detected_point.y;
+          msg_detected.points.push_back(point);
+        }
+        pub_candidate_points_[image_index].publish(msg_detected);
+      }
+      else{
+        uvdar_core::ImagePointsWithFloatStamped msg_detected;
+        msg_detected.stamp = image->header.stamp;
+        msg_detected.image_width = image->image.cols;
+        msg_detected.image_height = image->image.rows;
+        for (auto& detected_point : detected_points_[image_index]) {
+          uvdar_core::Point2DWithFloat point;
+          point.x = detected_point.x;
+          point.y = detected_point.y;
+          msg_detected.points.push_back(point);
+        }
+        pub_candidate_points_[image_index].publish(msg_detected);
+      }
+      
+      */
+      
+      
       uvdar_core::ImagePointsWithFloatStamped msg_detected;
       msg_detected.stamp = image->header.stamp;
       msg_detected.image_width = image->image.cols;
@@ -492,6 +560,8 @@ private:
         msg_detected.points.push_back(point);
       }
       pub_candidate_points_[image_index].publish(msg_detected);
+      
+        
     }
 
   }
@@ -635,11 +705,13 @@ private:
   std::vector<ros::Timer> timer_process_tracking_;
 
 
-  std::vector<cv::Point2i> trackingPoints;
-  std::vector<std::vector<cv::Point2i>> trackingPointsPerCamera;
+  std::vector<cv::Point> trackingPoints;
+  std::vector<std::vector<cv::Point>> trackingPointsPerCamera;
   std::vector<std::unique_ptr<UVDARLedDetectAdaptive>> uvda_;
-  std::vector<std::vector<cv::Point2i>> adaptive_detected_points_;
-  std::vector<std::vector<cv::Point2i>> combinedPoints_;
+  std::vector<std::vector<cv::Point>> adaptive_detected_points_;
+  std::vector<std::vector<cv::Point>> combinedPoints_;
+
+  bool received_tracking_points_ = false;
 
 
 };
