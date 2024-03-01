@@ -35,7 +35,7 @@ windows:
         # - waitForRos; sleep 3; rosbag play --clock ~/experiments/20_04/two_tx/two_tx/rx/occlusion_1/rx.bag
         # - waitForRos; sleep 3; rosbag play --clock ~/experiments/20_04/two_tx/two_tx/rx/occlusion_2/rx.bag
         # - waitForRos; rosbag play --clock ~/experiments/20_04/tumult/tumult/rx/rx.bag
-        - waitForRos; sleep 3; rosbag play --clock ~/Desktop/MRS_Master_Project/experiments/diff_power_5m_check.bag
+        - waitForRos; sleep 3; rosbag play --clock ~/Desktop/MRS_Master_Project/experiments/diff_power_7m_check.bag
         # - waitForRos; sleep 3; rosbag play --clock ~/experiments/19_04/demo_first/rx1/all_three/rx1.bag
 
   - topics:

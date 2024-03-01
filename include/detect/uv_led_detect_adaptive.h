@@ -6,6 +6,10 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <vector>
 #include <filesystem> 
+#include <cmath>
+#include <numeric>
+#include <iomanip> // Include for std::fixed and std::setprecision
+#include <tuple> // Include for std::tuple
 
 
 namespace uvdar {
@@ -15,7 +19,7 @@ public:
     UVDARLedDetectAdaptive(int neighborhoodSize = 25, double point_similarity_threshold = 5.0);
     ~UVDARLedDetectAdaptive();
 
-    bool processImageAdaptive(const cv::Mat& inputImage, const std::vector<cv::Point>& trackingPoints, std::vector<cv::Point>& detectedPoints, std::vector<cv::Point>& standardPoints);
+    bool processImageAdaptive(const cv::Mat& inputImage, const std::vector<cv::Point>& trackingPoints, std::vector<cv::Point>& detectedPoints, const std::vector<cv::Point>& standardPoints);
 
     void generateVisualizationAdaptive(const cv::Mat& inputImage,cv::Mat& visualization_image,const std::vector<cv::Point>& detectedPoints);
 
@@ -36,7 +40,12 @@ private:
 
     std::vector<cv::Point> mergePoints(const std::vector<cv::Point>& adaptivePoints,const std::vector<cv::Point>& standardPoints, double threshold);
 
-    void saveRoiImage(const cv::Mat& binaryRoi, const cv::Point& center, int index);
+    double calculateKLDivergence(const std::vector<double>& segmentHist, const std::vector<double>& overallHist);
+    double calculateKLDivergence2(const cv::Mat& hist, const std::vector<double>& Q, int start, int end);
+
+    std::tuple<int, double> findOptimalThresholdUsingKL(const cv::Mat& roiImage);
+
+    void saveRoiImage(const cv::Mat& binaryRoi, const cv::Point& center, int index, int thresholdValue, double klDivergence);
 
     int neighborhoodSize_;
     double point_similarity_threshold_;

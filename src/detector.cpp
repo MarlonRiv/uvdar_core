@@ -144,7 +144,7 @@ public:
       
       ROS_INFO("[UVDARDetector]: Initializing ADAPTIVE-based marker detection...");
       uvda_.push_back(std::make_unique<UVDARLedDetectAdaptive>(
-            15,
+            20,
             5.0
             ));
       if (!uvda_.back()){
@@ -444,7 +444,9 @@ private:
 
         cv::Mat visualization_image;
         
-        uvda_[image_index]->generateVisualizationAdaptive(image->image,visualization_image,adaptive_detected_points_[image_index]);
+        cv::Mat white_background = cv::Mat::ones(image->image.size(), image->image.type()) * 255;
+        
+        uvda_[image_index]->generateVisualizationAdaptive(white_background,visualization_image,adaptive_detected_points_[image_index]);
         publishVisualizationImage(visualization_image);
 
 
@@ -516,10 +518,7 @@ private:
       }
 
 
-      /*
-
-
-      if (received_tracking_points_){
+      if (adaptive_detected_points_[image_index].size() > 0){
         uvdar_core::ImagePointsWithFloatStamped msg_detected;
         msg_detected.stamp = image->header.stamp;
         msg_detected.image_width = image->image.cols;
@@ -546,8 +545,12 @@ private:
         pub_candidate_points_[image_index].publish(msg_detected);
       }
       
-      */
       
+
+
+     /*
+
+
       
       uvdar_core::ImagePointsWithFloatStamped msg_detected;
       msg_detected.stamp = image->header.stamp;
@@ -560,6 +563,12 @@ private:
         msg_detected.points.push_back(point);
       }
       pub_candidate_points_[image_index].publish(msg_detected);
+     
+     
+     
+     */
+      
+     
       
         
     }

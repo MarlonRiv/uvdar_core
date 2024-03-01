@@ -1,9 +1,13 @@
 #include "uv_led_detect_adaptive.h"
 #include <iostream>
 #include <set>
-
 #include <filesystem>  // C++17 and above
 #include <opencv2/imgcodecs.hpp>
+#include <cmath>
+#include <numeric>
+#include <iomanip> // Include for std::fixed and std::setprecision
+#include <tuple> // Include for std::tuple
+
 
 namespace fs = std::filesystem;
 
@@ -21,7 +25,7 @@ UVDARLedDetectAdaptive::UVDARLedDetectAdaptive(int neighborhoodSize, double poin
 UVDARLedDetectAdaptive::~UVDARLedDetectAdaptive() {}
 
 /* processImageAdaptive //{ */
-bool UVDARLedDetectAdaptive::processImageAdaptive(const cv::Mat& inputImage, const std::vector<cv::Point>& trackingPoints, std::vector<cv::Point>& detectedPoints, std::vector<cv::Point>& standardPoints) {
+bool UVDARLedDetectAdaptive::processImageAdaptive(const cv::Mat& inputImage, const std::vector<cv::Point>& trackingPoints, std::vector<cv::Point>& detectedPoints, const std::vector<cv::Point>& standardPoints) {
 
     /**
      * @brief: This function processes the input image to detect UV-LEDs using adaptive thresholding
@@ -80,17 +84,14 @@ bool UVDARLedDetectAdaptive::processImageAdaptive(const cv::Mat& inputImage, con
         std::cout << "[UVDARLedDetectAdaptive]: Final detected point " << i << ": " << final_detected_points[i] << std::endl;
     }
     
-    
     */
-  
-    
-    standardPoints = final_detected_points;
+    detectedPoints = final_detected_points;
+    //standardPoints = final_detected_points;
     
     //Fail if no points are detected TODO
     //if (final_detected_points.size() == 0){
     //    return false;
     //}
-
 
     return true;//if successful
 }
@@ -129,16 +130,86 @@ std::vector<cv::Point> UVDARLedDetectAdaptive::applyAdaptiveThreshold(const cv::
     //lastProcessedROIs_.push_back(roi); // Store the ROI for visualization
     //cv::Rect roi(point.x - neighborhoodSize, point.y - neighborhoodSize, 2 * neighborhoodSize, 2 * neighborhoodSize);
     cv::Mat roiImage = grayImage(roi); // Extract the ROI from the grayscale image
-    saveRoiImage(roiImage, point, roiIndex_++);
+    //Copy the roiImage for comparison of threshold without blur
+    cv::Mat roiImageCopy = roiImage.clone();
+    cv::Mat roiImageCopy2 = roiImage.clone();
+    saveRoiImage(roiImage, point, roiIndex_++, 0, 0.0);
+
+
+    
+    /*
+
+        //Apply CLAHE to the ROI
+    cv::Ptr<cv::CLAHE> clahe = cv::createCLAHE();
+    clahe->setClipLimit(2.0);
+    clahe->apply(roiImageCopy2, roiImageCopy2);
+    saveRoiImage(roiImageCopy2, point, roiIndex_++, 0, 0.0);
+    
+    */
+
     //Apply Gaussian blur to the ROI
-    //double sigmaX = 0.5;
-    //double sigmaY = 0.5;
-    //cv::GaussianBlur(roiImage, roiImage, cv::Size(0, 0), sigmaX, sigmaY);
-    //saveRoiImage(roiImage, point, roiIndex_++);
+    cv::Mat blurred;
+    double sigmaX = 6.0;
+    double sigmaY = 6.0;
+    cv::GaussianBlur(roiImageCopy, blurred, cv::Size(0, 0), sigmaX, sigmaY);
+
+    // Create unsharp mask by subtracting the blurred version from the original image
+    cv::Mat unsharpMask = roiImageCopy - blurred;
+
+    saveRoiImage(unsharpMask, point, roiIndex_++, 0, 0.0);
+    // Apply the unsharp mask to the original image to enhance edges
+    cv::Mat enhancedImage;
+    cv::addWeighted(roiImageCopy, 0.5, unsharpMask, 1.5, 0, enhancedImage);
+
+    saveRoiImage(enhancedImage, point, roiIndex_++, 0, 0.0);
+
+
     cv::Mat binaryRoi;
     //cv::adaptiveThreshold(roiImage, binaryRoi, 255, cv::ADAPTIVE_THRESH_GAUSSIAN_C, cv::THRESH_BINARY, 11, 2);
-    cv::threshold(roiImage, binaryRoi, 0, 255, cv::THRESH_BINARY | cv::THRESH_OTSU); // Apply Otsu's thresholding
+    double thresholdValue= cv::threshold(enhancedImage, binaryRoi, 0, 255, cv::THRESH_BINARY | cv::THRESH_OTSU); // Apply Otsu's thresholding
 
+    //Apply Otsu's thresholding without blur
+    cv::Mat binaryRoiCopy_otsu;
+    double thresholdValue_no_blur=cv::threshold(roiImageCopy, binaryRoiCopy_otsu, 0, 255, cv::THRESH_BINARY | cv::THRESH_OTSU); // Apply Otsu's thresholding
+
+    saveRoiImage(binaryRoiCopy_otsu, point, roiIndex_++, thresholdValue_no_blur, 0.0);
+
+
+    auto [optimalThreshold, minKLDivergence] = findOptimalThresholdUsingKL(enhancedImage);
+
+    //Apply the optimal threshold to the original ROI
+    auto [optimalThreshold_no_blur, minKLDivergence_no_blur] = findOptimalThresholdUsingKL(roiImageCopy2);
+
+    saveRoiImage(binaryRoi, point, roiIndex_++, optimalThreshold_no_blur, minKLDivergence_no_blur);
+
+    
+    cv::Mat binaryRoiCopy;
+
+    cv::threshold(enhancedImage,binaryRoiCopy, optimalThreshold, 255, cv::THRESH_BINARY);
+
+    std::cout << "[UVDARLedDetectAdaptive]: THRESHOLD VALUE: " << thresholdValue << std::endl;
+    std::cout << "[UVDARLedDetectAdaptive]: OPTIMAL THRESHOLD VALUE: " << optimalThreshold << std::endl;
+    //Get the value of the threshold
+    saveRoiImage(binaryRoi, point, roiIndex_++, thresholdValue, 0.0);
+    
+    saveRoiImage(binaryRoiCopy, point, roiIndex_++, optimalThreshold, minKLDivergence);
+
+    /*
+
+    //Apply Gaussian blur to the ROI
+    double sigmaX = 0.1;
+    double sigmaY = 0.1;
+    cv::GaussianBlur(roiImage, roiImage, cv::Size(0, 0), sigmaX, sigmaY);
+    saveRoiImage(roiImage, point, roiIndex_++);
+    
+    //Otstu's thresholding without blur
+    //cv::Mat binaryRoiCopy;
+    //cv::threshold(roiImageCopy, binaryRoiCopy, 0, 255, cv::THRESH_BINARY | cv::THRESH_OTSU); // Apply Otsu's thresholding
+
+    //saveRoiImage(binaryRoiCopy, point, roiIndex_++);
+
+    */
+    
     // Perform morphological opening to remove small noise points
     //int morphSize = 1; // This is the size of the structuring element used for morphological operations
     //cv::Mat element = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(2 * morphSize + 1, 2 * morphSize + 1), cv::Point(morphSize, morphSize));
@@ -198,7 +269,7 @@ std::vector<cv::Point> UVDARLedDetectAdaptive::applyAdaptiveThreshold(const cv::
 
     }
     else{
-    saveRoiImage(binaryRoi, point, roiIndex_++);
+    //saveRoiImage(binaryRoi, point, roiIndex_++);
     lastProcessedROIs_.push_back(roi); // Store the ROI for visualization
     // Store the binary ROI (For debugging/visualization)
     lastProcessedBinaryROIs_.push_back(binaryRoi);
@@ -308,6 +379,148 @@ std::vector<cv::Point> UVDARLedDetectAdaptive::mergePoints(const std::vector<cv:
 }
 //}
 
+/* calculateKLDivergence //{ */
+// Function to calculate KL divergence
+double UVDARLedDetectAdaptive::calculateKLDivergence(const std::vector<double>& segmentHist, const std::vector<double>& overallHist) {
+    /**
+     * @brief: This function calculates the Kullback-Leibler divergence between two distributions
+     *  
+     * Args:
+     * segmentHist: The histogram of the segment
+     * overallHist: The histogram of the overall image
+     *  
+     * @returns:
+     * klDivergence: The Kullback-Leibler divergence
+     */
+
+
+    
+    //print size of segmentHist and overallHist
+    double klDivergence = 0.0;
+    for (size_t i = 0; i < overallHist.size(); ++i) {
+        // Make sure we only calculate where both distributions have positive values
+        if (segmentHist[i] > 0 && overallHist[i] > 0) {
+            klDivergence += overallHist[i] * log(overallHist[i] / segmentHist[i]);
+        }
+    }
+    return klDivergence;
+    
+    
+    
+
+   /*
+
+      double klDivergence = 0.0;
+    for (size_t i = 0; i < segmentHist.size(); ++i) {
+        // Ensure we only calculate where both distributions have positive values
+        if (segmentHist[i] > 0 && overallHist[i] > 0) {
+            double ratio = segmentHist[i] / overallHist[i];
+            double logValue = log(ratio); // Calculate the logarithm of the ratio
+            double contribution = overallHist[i] * logValue; // Contribution to the KL divergence
+
+            // Debugging prints
+            std::cout << "Bin " << i << ": segmentHist = " << segmentHist[i] << ", overallHist = " << overallHist[i] << std::endl;
+            std::cout << "     Ratio = " << ratio << ", Log(Ratio) = " << logValue << ", Contribution = " << contribution << std::endl;
+
+            klDivergence += contribution;
+        } else if (segmentHist[i] == 0 && overallHist[i] > 0) {
+            // Special case handling if needed, e.g., when segmentHist[i] is 0 but overallHist[i] is not
+            // This scenario contributes 0 to KL divergence as per its mathematical properties but check how you want to handle it
+            std::cout << "Bin " << i << " has segmentHist[i] = 0 and overallHist[i] > 0, which is skipped in calculation." << std::endl;
+        }
+    }
+    std::cout << "Total KL Divergence: " << klDivergence << std::endl;
+    return klDivergence;
+   
+   */
+
+
+  
+}
+//}
+
+// Function to calculate KL divergence
+double UVDARLedDetectAdaptive::calculateKLDivergence2(const cv::Mat& hist, const std::vector<double>& Q, int start, int end) {
+    double klDivergence = 0.0;
+    for (int i = start; i <= end; ++i) {
+        double p = hist.at<float>(i);
+        // Assuming Q is normalized and has the same size as hist
+        if (p > 0 && Q[i] > 0) { // Avoid division by zero or log(0)
+            klDivergence += p * log(p / Q[i]);
+        }
+    }
+    return klDivergence;
+}
+
+/* findOptimalThresholdUsingKL */
+std::tuple<int, double> UVDARLedDetectAdaptive::findOptimalThresholdUsingKL(const cv::Mat& roiImage) {
+    /**
+     * @brief: This function finds the optimal threshold for adaptive thresholding using Kullback-Leibler divergence
+     *  
+     * Args:
+     * roiImage: The region of interest
+     *  
+     * @returns:
+     * optimalThreshold: The optimal threshold
+     */
+    
+    // Calculate the histogram of the ROI image
+    int histSize = 256;
+    float range[] = {0, 256};
+    const float* histRange = {range};
+    cv::Mat hist;
+    cv::calcHist(&roiImage, 1, 0, cv::Mat(), hist, 1, &histSize, &histRange, true, false);
+    cv::normalize(hist, hist, 1, 0, cv::NORM_L1, -1, cv::Mat());
+
+    double minKLDivergence = std::numeric_limits<double>::max();
+    int optimalThreshold = 0;
+
+    
+    // Convert cv::Mat hist to std::vector<double> for easier manipulation
+    std::vector<double> Q(histSize);
+    for (int i = 0; i < histSize; ++i) {
+        Q[i] = hist.at<float>(i);
+    }
+
+    // Iterate over all possible thresholds to find the one that minimizes the KL divergence
+    for (int t = 1; t < histSize - 1; ++t) {
+        // Split the normalized histogram at threshold t to create segmented distributions
+        std::vector<double> P_below(Q.begin(), Q.begin() + t + 1);
+        std::vector<double> P_above(Q.begin() + t + 1, Q.end());
+
+        // Ensure these vectors represent probabilities for their segments by re-normalizing
+        double sumBelow = std::accumulate(P_below.begin(), P_below.end(), 0.0);
+        double sumAbove = std::accumulate(P_above.begin(), P_above.end(), 0.0);
+
+        std::for_each(P_below.begin(), P_below.end(), [sumBelow](double& d) { d /= sumBelow; });
+        std::for_each(P_above.begin(), P_above.end(), [sumAbove](double& d) { d /= sumAbove; });
+
+        // Calculate the KL divergence for segments below and above the threshold
+        double klDivBelow = calculateKLDivergence(P_below, Q);
+        double klDivAbove = calculateKLDivergence(P_above, Q);
+
+        // Total KL divergence for the current threshold
+        double totalKLDiv = klDivBelow + klDivAbove;
+
+        // Seeking the threshold that minimizes the KL divergence
+        if (totalKLDiv < minKLDivergence && totalKLDiv > 0.0) {
+            minKLDivergence = totalKLDiv;
+            optimalThreshold = t;
+        }
+    }
+
+    //Print the minKLDivergence and optimalThreshold
+    std::cout << "[UVDARLedDetectAdaptive]: MIN KL DIVERGENCE: " << minKLDivergence << std::endl;
+    std::cout << "[UVDARLedDetectAdaptive]: OPTIMAL THRESHOLD: " << optimalThreshold << std::endl;
+
+
+    return std::make_tuple(optimalThreshold, minKLDivergence);
+
+}
+//}
+
+
+
 /* generateVisualizationAdaptive //{ */
 void UVDARLedDetectAdaptive::generateVisualizationAdaptive(const cv::Mat& inputImage,cv::Mat& visualization_image, const std::vector<cv::Point>& detectedPoints) {
 
@@ -323,6 +536,8 @@ void UVDARLedDetectAdaptive::generateVisualizationAdaptive(const cv::Mat& inputI
     */
 
     // Create a copy of the current image for visualization
+    //Set the a black background with the same size as the input image
+    
     visualization_image = inputImage.clone();
 
 
@@ -368,15 +583,31 @@ void UVDARLedDetectAdaptive::generateVisualizationAdaptive(const cv::Mat& inputI
 /* saveRoiImage //{ */
 
 
-void UVDARLedDetectAdaptive::saveRoiImage(const cv::Mat& binaryRoi, const cv::Point& center, int index) {
+void UVDARLedDetectAdaptive::saveRoiImage(const cv::Mat& binaryRoi, const cv::Point& center, int index, int thresholdValue = 0, double minKLDivergence = 0.0) {
+    /**
+     * @brief: This function saves the binary ROI as an image
+     *  
+     * Args:
+     * binaryRoi: The binary ROI
+     * center: The center of the ROI
+     * index: The index of the ROI
+     * thresholdValue: The threshold value used for adaptive thresholding
+     *  
+     * @returns:
+     * None
+     */
     // Specify the output directory
     std::string outputDir = "/home/rivermar/Desktop/MRS_Master_Project/roi_images";
 
     // Ensure the output directory exists
     fs::create_directories(outputDir);
 
+     // Convert minKLDivergence to string with fixed decimal places
+    std::stringstream minKLDivStream;
+    minKLDivStream << std::fixed << std::setprecision(2) << minKLDivergence; // Adjust precision as needed
+
     // Format the filename
-    std::string filename = "roi_" + std::to_string(center.x) + "_" + std::to_string(center.y) + "_" + std::to_string(index) + ".png";
+    std::string filename = "roi_" + std::to_string(center.x) + "_" + std::to_string(center.y) + "_" + std::to_string(index) + "_" + std::to_string(thresholdValue) + "_" + minKLDivStream.str() + ".png";
     std::string fullPath = fs::path(outputDir) / filename;
 
     // Save the image
