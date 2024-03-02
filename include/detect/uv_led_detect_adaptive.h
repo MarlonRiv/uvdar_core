@@ -10,6 +10,7 @@
 #include <numeric>
 #include <iomanip> // Include for std::fixed and std::setprecision
 #include <tuple> // Include for std::tuple
+#include <algorithm>
 
 
 namespace uvdar {
@@ -38,6 +39,8 @@ private:
 
     bool isClose(const cv::Point& p1, const cv::Point& p2, double threshold);
 
+    int adjustNeighborhoodSizeBasedOnArea(const cv::Mat& roiImage, const std::vector<std::vector<cv::Point>>& contours, int currentSize);
+
     std::vector<cv::Point> mergePoints(const std::vector<cv::Point>& adaptivePoints,const std::vector<cv::Point>& standardPoints, double threshold);
 
     double calculateKLDivergence(const std::vector<double>& segmentHist, const std::vector<double>& overallHist);
@@ -50,6 +53,8 @@ private:
     int neighborhoodSize_;
     double point_similarity_threshold_;
     int roiIndex_;
+    int MAX_SIZE = 50;
+    int MIN_SIZE = 5;
     std::vector<cv::Mat> lastProcessedBinaryROIs_;
     std::vector<cv::Rect> lastProcessedROIs_; // For storing ROI positions
     std::vector<cv::Point> allRoiDetectedPoints;// For storing ROI positions
