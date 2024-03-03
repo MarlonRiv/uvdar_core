@@ -79,11 +79,11 @@ namespace uvdar {
 
         //for simulation
         for (int i = 0; i < 8; i++) {
-          clients_set_sq_gz.push_back(nh.serviceClient<mrs_msgs::SetInt>("/gazebo/ledSignalSetter/" + _uav_name_ + "_uvled_" + std::to_string(i + 1) + "_lens_link"));
-          clients_set_fr_gz.push_back(nh.serviceClient<mrs_msgs::Float64Srv>("/gazebo/ledFrequencySetter/" + _uav_name_ + "_uvled_" + std::to_string(i + 1) + "_lens_link"));
-          clients_set_md_gz.push_back(nh.serviceClient<mrs_msgs::SetInt>("/gazebo/ledModeSetter/" + _uav_name_ + "_uvled_" + std::to_string(i + 1) + "_lens_link"));
-          clients_set_ms_gz.push_back(nh.serviceClient<uvdar_core::SetLedMessage>("/gazebo/ledMessageSender/" + _uav_name_ + "_uvled_" + std::to_string(i + 1) + "_lens_link"));
-          clients_set_ac_gz.push_back(nh.serviceClient<std_srvs::SetBool>("/gazebo/ledActiveSetter/" + _uav_name_ + "_uvled_" + std::to_string(i + 1) + "_lens_link"));
+          clients_set_sq_gz.push_back(nh.serviceClient<mrs_msgs::SetInt>("/gazebo/ledSignalSetter/" + _uav_name_ + "_" + std::to_string(i + 1)));
+          clients_set_fr_gz.push_back(nh.serviceClient<mrs_msgs::Float64Srv>("/gazebo/ledFrequencySetter/" + _uav_name_ + "_" + std::to_string(i + 1)));
+          clients_set_md_gz.push_back(nh.serviceClient<mrs_msgs::SetInt>("/gazebo/ledModeSetter/" + _uav_name_ +  "_" +std::to_string(i + 1)));
+          clients_set_ms_gz.push_back(nh.serviceClient<uvdar_core::SetLedMessage>("/gazebo/ledMessageSender/" + _uav_name_ + "_" + std::to_string(i + 1)));
+          clients_set_ac_gz.push_back(nh.serviceClient<std_srvs::SetBool>("/gazebo/ledActiveSetter/" + _uav_name_ +  "_" +std::to_string(i + 1)));
         }
 
         initialized = true;
@@ -138,14 +138,14 @@ namespace uvdar {
         }
           
 
-        unsigned short int_frequency = (unsigned short)(req.value);
+        unsigned short int_frequency = (unsigned short)(req.value); // Hz
 
         mrs_modules_msgs::BacaProtocol serial_msg;
         serial_msg.stamp = ros::Time::now();
 
         serial_msg.payload.push_back(0x96); //set frequency
-        serial_msg.payload.push_back((unsigned char)int_frequency>>8); //# Hz
-        serial_msg.payload.push_back((unsigned char)int_frequency%256); //# Hz
+        serial_msg.payload.push_back((unsigned char) (int_frequency & 0x00FF)); // LSB-first
+        serial_msg.payload.push_back((unsigned char) ((int_frequency & 0xFF00) >> 8));
         baca_protocol_publisher.publish(serial_msg);
 
         res.message = std::string("Setting the frequency to "+std::to_string((int)(int_frequency))+" Hz").c_str();
