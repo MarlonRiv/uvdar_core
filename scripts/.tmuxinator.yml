@@ -1,0 +1,55 @@
+name: simulation
+root: ./
+startup_window: launch
+pre_window: UAV_NAME=uav7
+windows:
+  - core:
+      layout: even-vertical
+      panes:
+        - roscore
+  - launch:
+      layout: even-vertical
+      panes:
+        - waitForRos; roslaunch uvdar_core rosbag.launch uav_name:=uav7 use_4DHT:=false debug:=false
+  # - kf:
+      # layout: even-vertical
+      # panes:
+        # -  waitForRos; roslaunch uvdar_core uvdar_kf.launch UAV_NAME:=uav39
+        #publish_visualization:=false max_zeros_consecutive:=3 max_ones_consecutive:=3 allowed_BER_per_seq:=1 gui:=true
+  - record:
+      layout: even-vertical
+      panes:
+        #- waitForRos; sleep 3; rosbag record -O ~/Desktop/MRS_Master_Project/rosbags/exposure_5000_topics.bag /uav7/uvdar_bluefox/left/image_raw /uav7/uvdar/points_seen_left /uav7/uvdar/blinkers_seen_back /uav7/uvdar/omta_all_seq_info_back 
+        #- rosbag record -O rosbags/first/omta_38.bag -e "(.*)_camp"
+        # - rosbag record -O rosbags/first/omta_39.bag -e "(.*)_camp"
+        # - rosbag record -O rosbags/first/4dht_38.bag -e "(.*)_camp"
+        # - rosbag record -O rosbags/first/4dht_39.bag -e "(.*)_camp"
+        # - rosbag record -O rosbags/second/omta_1.bag -e "(.*)_camp"
+        # - rosbag record -O rosbags/second/omta_2.bag -e "(.*)_camp"
+        # - rosbag record -O rosbags/third/omta.bag -e "(.*)_camp"
+        - waitForRos; sleep 3; rqt_image_view
+  - play:
+      layout: even-vertical
+      panes:
+        # - waitForRos; rosbag play --clock ~/experiments/19_04/demo_first/rx1/all_three/rx1.bag
+        # - waitForRos; sleep 3; rosbag play --clock ~/experiments/20_04/two_tx/two_tx/rx/occlusion_1/rx.bag
+        # - waitForRos; sleep 3; rosbag play --clock ~/experiments/20_04/two_tx/two_tx/rx/occlusion_2/rx.bag
+        # - waitForRos; rosbag play --clock ~/experiments/20_04/tumult/tumult/rx/rx.bag
+        - waitForRos; sleep 3; rosbag play --clock ~/Desktop/MRS_Master_Project/experiments/diff_power_7m_check.bag
+        # - waitForRos; sleep 3; rosbag play --clock ~/experiments/19_04/demo_first/rx1/all_three/rx1.bag
+
+  - topics:
+      layout: even-vertical
+      panes:
+        - waitForRos; sleep 3; rostopic echo /uav7/uvdar/blinkers_seen_back
+
+ # - waitForCompile; cd ~/uvdar_rosbag/tracking/uav7/22_2021_04_27_09_11_19_L12/ ; rosbag play --clock -s 30 _2021-04-27-09-11-56.bag
+  # - trajectory:
+  #     layout: even-vertical
+  #     panes:
+  #       - waitForRos; waitForOffboard; roslaunch uvdar_core load_trajectory.launch file:="observer_still.txt" 
+  # - rqt_image_view:
+  #     layout: even-vertical
+  #     panes:
+  #       - waitForCompile; roscore;
+  #       - waitForRos; rqt_image_view

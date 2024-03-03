@@ -38,6 +38,7 @@ set(LIBRARIES
   UvdarCore_ami
   UvdarCore_extendedSearch
   UvdarCore_uv_led_detect_fast
+  UvdarCore_uv_led_detect_adaptive
   UvdarCore_frequency_classifier
   UvdarCore_color_selector
   UvdarCore_UVDARDetector
@@ -265,6 +266,23 @@ target_link_libraries(UvdarCore_uv_led_detect_fast
   UvdarCore_compute_lib
   )
 
+## | ------------------ uv led detect adaptive ------------------ |
+
+add_library(UvdarCore_uv_led_detect_adaptive
+  include/detect/uv_led_detect_adaptive.cpp
+  )
+
+add_dependencies(UvdarCore_uv_led_detect_adaptive
+  ${${PROJECT_NAME}_EXPORTED_TARGETS}
+  ${catkin_EXPORTED_TARGETS}
+  )
+
+target_link_libraries(UvdarCore_uv_led_detect_adaptive
+  debug
+  ${OpenCV_LIBRARIES}
+  ${catkin_LIBRARIES}
+  )
+
 ## | ------------------ frequency classifier ------------------ |
 
 add_library(UvdarCore_frequency_classifier
@@ -337,6 +355,7 @@ target_link_libraries(UvdarCore_UVDARDetector
   ${catkin_LIBRARIES}
   ${OpenCV_LIBRARIES}
   UvdarCore_uv_led_detect_fast
+  UvdarCore_uv_led_detect_adaptive
   )
 
 ## | ------------------------ UvdarCore_unscented ----------------------- |

@@ -156,6 +156,8 @@ std::vector<cv::Point> UVDARLedDetectAdaptive::applyAdaptiveThreshold(const cv::
     //Apply Otsu's thresholding with the enhanced ROI
     double thresholdValue= cv::threshold(enhancedImage, binaryRoi, 0, 255, cv::THRESH_BINARY | cv::THRESH_OTSU); // Apply Otsu's thresholding
 
+    saveRoiImage(binaryRoi, point, roiIndex_++, thresholdValue, 0.0);
+
 
     /*
 
@@ -293,7 +295,7 @@ std::vector<cv::Point> UVDARLedDetectAdaptive::applyAdaptiveThreshold(const cv::
 
     if (roiDetectedPoints.size() > 3){
         //std::cout << "[UVDARLedDetectAdaptive]: NOISY ROI: " << roiDetectedPoints.size() << std::endl;
-        //Return empty roiDetectedPoints
+        //saveRoiImage(binaryRoi, point, roiIndex_++, thresholdValue, -1.0);
         std::vector<cv::Point> empty_roiDetectedPoints = {};
         return empty_roiDetectedPoints;
         //Clear the lastProcessedROIs_ and lastProcessedBinaryROIs_ vectors
@@ -307,6 +309,7 @@ std::vector<cv::Point> UVDARLedDetectAdaptive::applyAdaptiveThreshold(const cv::
     //lastProcessedBinaryROIs_.push_back(new_binaryRoi); // Store the binary ROI (For debugging/visualization)
     // Store the binary ROI (For debugging/visualization)
     lastProcessedBinaryROIs_.push_back(binaryRoi);
+    //saveRoiImage(binaryRoi, point, roiIndex_++, thresholdValue, 1.0);
     //std::cout << "[UVDARLedDetectAdaptive]: ADDING ROI DETECTED POINTS: " << roiDetectedPoints.size() << std::endl;
     return roiDetectedPoints;
     }
