@@ -12,6 +12,7 @@
 
 namespace fs = std::filesystem;
 
+
 struct PointComparator {
     bool operator() (const cv::Point& a, const cv::Point& b) const {
         return (a.x < b.x) || (a.x == b.x && a.y < b.y);
