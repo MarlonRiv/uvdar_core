@@ -157,7 +157,7 @@ std::vector<cv::Point> UVDARLedDetectAdaptive::applyAdaptiveThreshold(const cv::
     //Apply Otsu's thresholding with the enhanced ROI
     double thresholdValue= cv::threshold(enhancedImage, binaryRoi, 0, 255, cv::THRESH_BINARY | cv::THRESH_OTSU); // Apply Otsu's thresholding
 
-    saveRoiImage(binaryRoi, point, roiIndex_++, thresholdValue, 0.0);
+    //saveRoiImage(binaryRoi, point, roiIndex_++, thresholdValue, 0.0);
 
 
     /*
