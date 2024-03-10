@@ -356,6 +356,7 @@ target_link_libraries(UvdarCore_UVDARDetector
   ${OpenCV_LIBRARIES}
   UvdarCore_uv_led_detect_fast
   UvdarCore_uv_led_detect_adaptive
+  
   )
 
 ## | ------------------------ UvdarCore_unscented ----------------------- |
