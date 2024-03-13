@@ -55,6 +55,10 @@ bool UVDARLedDetectAdaptive::processImageAdaptive(const cv::Mat& inputImage, con
 
     int ROI_COUNT = 0;
 
+    if (trackingPoints.size() == 0 || trackingPoints.size() > 50) {
+        return false;
+    }   
+
     // Process each tracking point
     for (const auto& point : trackingPoints) {
         // Apply adaptive thresholding to the ROI around the tracking point
