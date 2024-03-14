@@ -1,1 +1,1 @@
-/home/rivermar/Desktop/MRS_Master_Project/L12.txt
+blinking_sequences/manchesterPropeties.txt

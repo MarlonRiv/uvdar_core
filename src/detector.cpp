@@ -31,13 +31,11 @@ namespace uvdar {
 class UVDARDetector : public nodelet::Nodelet{
 public:
 
-/* onInit() //{ */
-
-  /**
-   * @brief Initializer - loads parameters and initializes necessary structures
-   */
+  /* onInit() //{ */
   void onInit() {
-
+    /**
+     * @brief Initializer - loads parameters and initializes necessary structures
+     */
     ros::NodeHandle nh_ = nodelet::Nodelet::getMTPrivateNodeHandle();
 
     mrs_lib::ParamLoader param_loader(nh_, "UVDARDetector");
@@ -73,6 +71,7 @@ public:
     } else {
       ROS_INFO_STREAM("[UVDARDetector]: Blinkers seen topics: " << _blinkers_seen_topics.size());
     }
+    //}
   
     /* prepare masks if necessary //{ */
     param_loader.loadParam("use_masks", _use_masks_, bool(false));
@@ -113,7 +112,7 @@ public:
     ROS_INFO_STREAM("[UVDARDetector]: Initializing " << _camera_count_ << " cameras...");
 
     
-    // Create callbacks, timers and process objects for each camera
+     // Create callbacks, timers and process objects for each camera
     for (unsigned int i = 0; i < _camera_count_; ++i) {
       image_callback_t callback = [image_index=i,this] (const sensor_msgs::ImageConstPtr& image_msg) { 
         callbackImage(image_msg, image_index);
@@ -175,15 +174,15 @@ public:
       sub_blinkers_seen_.push_back(nh_.subscribe(_blinkers_seen_topics[i], 1, cals_blinkers_seen_[i]));
     }
 
-    /*
-     for (size_t i = 0; i < _camera_topics.size(); ++i) {
-        sub_blinkers_seen_.push_back(nh_.subscribe(_camera_topics[i], 1, cals_blinkers_seen_[i]));
-    }
-    */
+      /*
+      for (size_t i = 0; i < _camera_topics.size(); ++i) {
+          sub_blinkers_seen_.push_back(nh_.subscribe(_camera_topics[i], 1, cals_blinkers_seen_[i]));
+      }
+      */
    
-    //ros::Subscriber sub_blinkers_seen = nh_.subscribe(pub_blinkers_seen_topic, 1, &UVDARDetector::blinkersSeenCallback, this);
+     //ros::Subscriber sub_blinkers_seen = nh_.subscribe(pub_blinkers_seen_topic, 1, &UVDARDetector::blinkersSeenCallback, this);
 
-    //TODO ASK ABOUT THIS _camera_topics load param
+     //TODO ASK ABOUT THIS _camera_topics load param
     //}
 
     
@@ -214,7 +213,7 @@ public:
       pub_visualization_ = std::make_unique<mrs_lib::ImagePublisher>(boost::make_shared<ros::NodeHandle>(nh_));
     }
     //}
-    //
+    
     if (_gui_ || _publish_visualization_){
       timer_visualization_ = nh_.createTimer(ros::Duration(0.1), &UVDARDetector::VisualizationThread, this, false);
     }
@@ -283,10 +282,9 @@ private:
 
     //ROS_INFO_STREAM("[UVDARDetector]: Received image from camera " << image_index << " with size " << image->image.cols << "x" << image->image.rows << " and encoding " << image->encoding);
   }
+  //}
 
-
-
-  // Callback function for processing OMTA tracking points
+  /* blinkersSeenCallback //{ */
   void blinkersSeenCallback(const uvdar_core::ImagePointsWithFloatStampedConstPtr& points_msg,int image_index) {
 
     /*
@@ -317,12 +315,9 @@ private:
   //ROS_INFO_STREAM("[UVDARDetector]: Received tracking points from camera " << image_index);
  
   }
-
-
-
   //}
 
-
+  /* processTrackingPoints //{ */
   void processTrackingPoints(const ros::TimerEvent& te, const uvdar_core::ImagePointsWithFloatStampedConstPtr& msg, int image_index) {
     if (image_index < trackingPointsPerCamera.size()) {
       trackingPointsPerCamera[image_index].clear();
@@ -340,8 +335,11 @@ private:
       ROS_INFO_STREAM("[UVDARDetector]: Camera " << image_index << " Tracking points: " << trackingPointsPerCamera[image_index].size());
     }
   }
+  //}
 
 
+ 
+  /* publishVisualizationImage //{ */
   void publishVisualizationImage(const cv::Mat& visualization_image) {
     if (!visualization_image.empty()) {
         // Convert OpenCV image to ROS message
@@ -355,7 +353,7 @@ private:
         image_pub_.publish(ros_image);
     }
   }
-
+  //}
 
   /* processSingleImage //{ */
 
@@ -462,7 +460,7 @@ private:
         
         uvda_[image_index]->generateVisualizationAdaptive(white_background,visualization_image,adaptive_detected_points_[image_index]);
         publishVisualizationImage(visualization_image);
-
+       
 
       
       }

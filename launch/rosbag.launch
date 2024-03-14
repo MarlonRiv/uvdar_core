@@ -71,8 +71,8 @@
 <!-- OR -->
   <group ns="$(arg uav_name)">
 
-    <node pkg="nodelet" type="nodelet" name="$(arg uav_name)_uvdar_nodelet_manager" args="manager" output="screen" >
-    <!-- <node pkg="nodelet" type="nodelet" name="$(arg uav_name)_uvdar_nodelet_manager" args="manager" output="screen" launch-prefix="debug_roslaunch"> -->
+    <!-- <node pkg="nodelet" type="nodelet" name="$(arg uav_name)_uvdar_nodelet_manager" args="manager" output="screen" > -->
+    <node pkg="nodelet" type="nodelet" name="$(arg uav_name)_uvdar_nodelet_manager" args="manager" output="screen" launch-prefix="debug_roslaunch">
       <param name="num_worker_threads" value="8" />
     </node>
 
