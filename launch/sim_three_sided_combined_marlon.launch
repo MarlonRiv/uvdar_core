@@ -133,6 +133,7 @@
       <rosparam param="camera_topics"> ["camera_left", "camera_right", "camera_back"] </rosparam>
       <rosparam param="points_seen_topics"> ["points_seen_left", "points_seen_right", "points_seen_back"] </rosparam>
       <rosparam param="blinkers_seen_topics"> ["blinkers_seen_left", "blinkers_seen_right", "blinkers_seen_back"] </rosparam>
+      <rosparam param="adaptive_logging_topics"> ["adaptive_logging_left", "adaptive_logging_right", "adaptive_logging_back"] </rosparam>
 
 
       <param name="use_masks"         type="bool" value="false"/>
@@ -149,6 +150,11 @@
       <remap from="~blinkers_seen_left" to="/$(arg uav_name)/uvdar/blinkers_seen_left"/>
       <remap from="~blinkers_seen_right" to="/$(arg uav_name)/uvdar/blinkers_seen_right"/>
       <remap from="~blinkers_seen_back" to="/$(arg uav_name)/uvdar/blinkers_seen_back"/>
+
+      <remap from="~adaptive_logging_left" to="/$(arg uav_name)/uvdar/adaptive_logging_left"/>
+      <remap from="~adaptive_logging_right" to="/$(arg uav_name)/uvdar/adaptive_logging_right"/>
+      <remap from="~adaptive_logging_back" to="/$(arg uav_name)/uvdar/adaptive_logging_back"/>
+      
 
       <remap from="~odometry" to="/$(arg uav_name)/mrs_odometry/new_odom"/>
       <remap from="~imu" to="mavros/imu/data"/>

@@ -13,9 +13,18 @@
 #include <algorithm>
 
 
+struct ROIData{
+    int numRois;
+    std::vector<int> numberDetectedPoints;
+    std::vector<int> thresholdValue;
+    std::vector<float> klDivergence;
+    std::vector<int> validRoi;
+};
+
+
 namespace uvdar {
 
-class UVDARLedDetectAdaptive {
+class UVDARLedDetectAdaptive{
 public:
     UVDARLedDetectAdaptive(int neighborhoodSize = 25, double point_similarity_threshold = 5.0);
     ~UVDARLedDetectAdaptive();
@@ -23,6 +32,8 @@ public:
     bool processImageAdaptive(const cv::Mat& inputImage, const std::vector<cv::Point>& trackingPoints, std::vector<cv::Point>& detectedPoints, const std::vector<cv::Point>& standardPoints);
 
     void generateVisualizationAdaptive(const cv::Mat& inputImage,cv::Mat& visualization_image,const std::vector<cv::Point>& detectedPoints);
+
+    ROIData prepareAdaptiveDataForLogging();
 
     const std::vector<cv::Mat>& getLastProcessedBinaryROIs() const {
       return lastProcessedBinaryROIs_;
@@ -58,6 +69,13 @@ private:
     std::vector<cv::Mat> lastProcessedBinaryROIs_;
     std::vector<cv::Rect> lastProcessedROIs_; // For storing ROI positions
     std::vector<cv::Point> allRoiDetectedPoints;// For storing ROI positions
+
+    int numRois;
+    std::vector<int> numberDetectedPoints;
+    std::vector<int> thresholdValue;
+    std::vector<float> klDivergence;
+    std::vector<int> validRoi;
+
 };
 
 } // namespace uvdar

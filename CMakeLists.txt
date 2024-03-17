@@ -107,6 +107,8 @@ add_message_files(DIRECTORY msg FILES
   ImagePointsWithFloatStamped.msg
   Point2DWithFloat.msg
   Int32MultiArrayStamped.msg
+  AdaptiveDataForLogging.msg
+  ROIAdaptiveData.msg
   )
 
 generate_messages(DEPENDENCIES

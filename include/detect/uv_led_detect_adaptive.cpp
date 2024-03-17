@@ -7,7 +7,9 @@
 #include <numeric>
 #include <iomanip> // Include for std::fixed and std::setprecision
 #include <tuple> // Include for std::tuple
+#include <vector>
 #include <algorithm>
+
 
 
 namespace fs = std::filesystem;
@@ -49,11 +51,18 @@ bool UVDARLedDetectAdaptive::processImageAdaptive(const cv::Mat& inputImage, con
     lastProcessedBinaryROIs_.clear();
     lastProcessedROIs_.clear();
 
+    //Reset the number of ROIs
+    numRois = 0;
+    numberDetectedPoints.clear();
+    thresholdValue.clear();
+    klDivergence.clear();
+    validRoi.clear();
+    
+
 
     //Print size of tracking points
     std::cout << "[UVDARLedDetectAdaptive]: TRACKING POINTS SIZE: " << trackingPoints.size() << std::endl;
 
-    int ROI_COUNT = 0;
 
     if (trackingPoints.size() == 0 || trackingPoints.size() > 50) {
         return false;
@@ -63,7 +72,9 @@ bool UVDARLedDetectAdaptive::processImageAdaptive(const cv::Mat& inputImage, con
     for (const auto& point : trackingPoints) {
         // Apply adaptive thresholding to the ROI around the tracking point
         std::vector<cv::Point> roiDetectedPoints = applyAdaptiveThreshold(inputImage, point, neighborhoodSize_);
-        ROI_COUNT++;
+        numRois++;
+        
+
         // Check if the detected points are empty
         if (roiDetectedPoints.empty()){
             std::cout << "[UVDARLedDetectAdaptive]: EMPTY ROI DETECTED POINTS" << std::endl;
@@ -159,7 +170,12 @@ std::vector<cv::Point> UVDARLedDetectAdaptive::applyAdaptiveThreshold(const cv::
     cv::Mat binaryRoi;
     //cv::adaptiveThreshold(roiImage, binaryRoi, 255, cv::ADAPTIVE_THRESH_GAUSSIAN_C, cv::THRESH_BINARY, 11, 2);
     //Apply Otsu's thresholding with the enhanced ROI
-    double thresholdValue= cv::threshold(enhancedImage, binaryRoi, 0, 255, cv::THRESH_BINARY | cv::THRESH_OTSU); // Apply Otsu's thresholding
+    //double thresholdValue= cv::threshold(enhancedImage, binaryRoi, 0, 255, cv::THRESH_BINARY | cv::THRESH_OTSU); // Apply Otsu's thresholding
+
+
+    auto [optimalThreshold, minKLDivergence] = findOptimalThresholdUsingKL(enhancedImage);
+    cv::threshold(enhancedImage,binaryRoi, optimalThreshold, 255, cv::THRESH_BINARY);
+
 
     //saveRoiImage(binaryRoi, point, roiIndex_++, thresholdValue, 0.0);
 
@@ -301,6 +317,14 @@ std::vector<cv::Point> UVDARLedDetectAdaptive::applyAdaptiveThreshold(const cv::
     if (roiDetectedPoints.size() > 3){
         //std::cout << "[UVDARLedDetectAdaptive]: NOISY ROI: " << roiDetectedPoints.size() << std::endl;
         //saveRoiImage(binaryRoi, point, roiIndex_++, thresholdValue, -1.0);
+
+        numberDetectedPoints.push_back(roiDetectedPoints.size());
+        thresholdValue.push_back(optimalThreshold);
+        klDivergence.push_back(minKLDivergence);
+        validRoi.push_back(-1);
+        
+        //Return empty roiDetectedPoints
+
         std::vector<cv::Point> empty_roiDetectedPoints = {};
         return empty_roiDetectedPoints;
         //Clear the lastProcessedROIs_ and lastProcessedBinaryROIs_ vectors
@@ -310,12 +334,21 @@ std::vector<cv::Point> UVDARLedDetectAdaptive::applyAdaptiveThreshold(const cv::
     else{
     lastProcessedROIs_.push_back(roi); // Store the ROI for visualization
     //lastProcessedROIs_.push_back(new_roi); // Store the ROI for visualization
-
     //lastProcessedBinaryROIs_.push_back(new_binaryRoi); // Store the binary ROI (For debugging/visualization)
     // Store the binary ROI (For debugging/visualization)
     lastProcessedBinaryROIs_.push_back(binaryRoi);
-    //saveRoiImage(binaryRoi, point, roiIndex_++, thresholdValue, 1.0);
+    //saveRoiImage(binaryRoi, point, roiIndex_++, optimalThreshold, 1.0);
     //std::cout << "[UVDARLedDetectAdaptive]: ADDING ROI DETECTED POINTS: " << roiDetectedPoints.size() << std::endl;
+
+
+    numberDetectedPoints.push_back(roiDetectedPoints.size());
+    thresholdValue.push_back(optimalThreshold);
+    klDivergence.push_back(minKLDivergence);
+    validRoi.push_back(1);
+    
+
+
+
     return roiDetectedPoints;
     }
 
@@ -692,5 +725,26 @@ void UVDARLedDetectAdaptive::saveRoiImage(const cv::Mat& binaryRoi, const cv::Po
 //}
 
 
+/* prepareAdaptiveDataForLogging //{ */
+ROIData UVDARLedDetectAdaptive::prepareAdaptiveDataForLogging() {
+    /**
+     * @brief: This function prepares the adaptive data for logging
+     *  
+     * Args:
+     * None
+     *  
+     * @returns:
+     * A tuple containing the number of detected points, the threshold value, the KL divergence, and the validity of the ROI
+     */
+    
+    ROIData adaptiveData;
+    adaptiveData.numRois = numRois;
+    adaptiveData.numberDetectedPoints = numberDetectedPoints;
+    adaptiveData.thresholdValue = thresholdValue;
+    adaptiveData.klDivergence = klDivergence;
+    adaptiveData.validRoi = validRoi;
+
+    return adaptiveData;
+}
 
 } // namespace uvdar

@@ -11,6 +11,7 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/imgcodecs/imgcodecs.hpp>
 #include <uvdar_core/ImagePointsWithFloatStamped.h>
+#include <uvdar_core/AdaptiveDataForLogging.h>
 #include <mrs_lib/image_publisher.h>
 #include <mrs_lib/param_loader.h>
 #include <boost/filesystem/operations.hpp>
@@ -47,6 +48,8 @@ public:
     param_loader.loadParam("publish_visualization", _publish_visualization_, bool(false));
 
     param_loader.loadParam("threshold", _threshold_, 200);
+
+
 
     /* subscribe to cameras //{ */
     std::vector<std::string> _camera_topics;
@@ -211,7 +214,25 @@ public:
     if (_publish_visualization_){
       ROS_INFO_STREAM("[UVDARDetector]: Publishing visualization.");
       pub_visualization_ = std::make_unique<mrs_lib::ImagePublisher>(boost::make_shared<ros::NodeHandle>(nh_));
+      
     }
+
+
+    // Create publishers from adaptive logging topics
+    std::vector<std::string> _adaptive_logging_topics;
+
+    param_loader.loadParam("adaptive_logging_topics", _adaptive_logging_topics, _adaptive_logging_topics);
+
+    if (_adaptive_logging_topics.size() != _camera_count_) {
+      ROS_ERROR_STREAM("[UVDARDetector] The number of adaptive logging topics (" << _adaptive_logging_topics.size()  << ") does not match the number of cameras (" << _camera_count_ << ")!");
+      return;
+    }
+
+    for (size_t i = 0; i < _adaptive_logging_topics.size(); ++i) {
+      pub_adaptive_logging_.push_back(nh_.advertise<uvdar_core::AdaptiveDataForLogging>(_adaptive_logging_topics[i], 1));
+      ROI_data.push_back(ROIData());
+    }
+
     //}
     
     if (_gui_ || _publish_visualization_){
@@ -543,6 +564,21 @@ private:
           msg_detected.points.push_back(point);
         }
         pub_candidate_points_[image_index].publish(msg_detected);
+
+        ROIData adaptiveData = uvda_[image_index]->prepareAdaptiveDataForLogging();
+
+        uvdar_core::AdaptiveDataForLogging msg_adaptive;
+
+        msg_adaptive.stamp = image->header.stamp;
+
+        msg_adaptive.num_rois = adaptiveData.numRois;
+        msg_adaptive.roi_detected_points = adaptiveData.numberDetectedPoints;
+        msg_adaptive.roi_threshold_used = adaptiveData.thresholdValue;
+        msg_adaptive.roi_kl_divergence = adaptiveData.klDivergence;
+        msg_adaptive.roi_is_valid = adaptiveData.validRoi;
+        
+        pub_adaptive_logging_[image_index].publish(msg_adaptive);
+       
       }
       else{
         ROS_INFO_STREAM("[UVDARDetector]: Publishing standard points.");
@@ -691,6 +727,7 @@ private:
 
   std::vector<ros::Publisher> pub_sun_points_;
   std::vector<ros::Publisher> pub_candidate_points_;
+  std::vector<ros::Publisher> pub_adaptive_logging_;
 
   ros::Publisher image_pub_;
 
@@ -735,7 +772,7 @@ private:
 
   bool received_tracking_points_ = false;
 
-
+  std::vector<ROIData> ROI_data;
 };
 
 

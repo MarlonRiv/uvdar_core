@@ -1,0 +1,4 @@
+int32 detected_points
+int32 threshold_used
+float32 kl_divergence
+bool is_valid
