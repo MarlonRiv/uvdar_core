@@ -75,3 +75,10 @@ windows:
       layout: tiled
       panes:
         - waitForControl; sleep 3; ~/.i3/layout_manager.sh ./layout.json
+  - record:
+      layout: even-vertical
+      panes:
+        - waitForRos; sleep 3; rosbag record -O ~/Desktop/MRS_Master_Project/rosbags/simulation/sim_otsu_topics.bag /uav1/uvdar/adaptive_logging_back /uav1/uvdar/adaptive_logging_left /uav1/uvdar/adaptive_logging_right --duration=3m  
+        #- rosbag record -O rosbags/first/omta_38.bag -e "(.*)_camp"
+        # - rosbag record -O rosbags/first/omta_39.bag -e "(.*)_camp"
+

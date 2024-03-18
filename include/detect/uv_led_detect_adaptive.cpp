@@ -170,11 +170,11 @@ std::vector<cv::Point> UVDARLedDetectAdaptive::applyAdaptiveThreshold(const cv::
     cv::Mat binaryRoi;
     //cv::adaptiveThreshold(roiImage, binaryRoi, 255, cv::ADAPTIVE_THRESH_GAUSSIAN_C, cv::THRESH_BINARY, 11, 2);
     //Apply Otsu's thresholding with the enhanced ROI
-    //double thresholdValue= cv::threshold(enhancedImage, binaryRoi, 0, 255, cv::THRESH_BINARY | cv::THRESH_OTSU); // Apply Otsu's thresholding
+    int thresholdValue_= cv::threshold(enhancedImage, binaryRoi, 0, 255, cv::THRESH_BINARY | cv::THRESH_OTSU); // Apply Otsu's thresholding
 
 
-    auto [optimalThreshold, minKLDivergence] = findOptimalThresholdUsingKL(enhancedImage);
-    cv::threshold(enhancedImage,binaryRoi, optimalThreshold, 255, cv::THRESH_BINARY);
+    //auto [optimalThreshold, minKLDivergence] = findOptimalThresholdUsingKL(enhancedImage);
+    //cv::threshold(enhancedImage,binaryRoi, optimalThreshold, 255, cv::THRESH_BINARY);
 
 
     //saveRoiImage(binaryRoi, point, roiIndex_++, thresholdValue, 0.0);
@@ -319,8 +319,8 @@ std::vector<cv::Point> UVDARLedDetectAdaptive::applyAdaptiveThreshold(const cv::
         //saveRoiImage(binaryRoi, point, roiIndex_++, thresholdValue, -1.0);
 
         numberDetectedPoints.push_back(roiDetectedPoints.size());
-        thresholdValue.push_back(optimalThreshold);
-        klDivergence.push_back(minKLDivergence);
+        thresholdValue.push_back(thresholdValue_);
+        klDivergence.push_back(0.0);
         validRoi.push_back(-1);
         
         //Return empty roiDetectedPoints
@@ -342,8 +342,8 @@ std::vector<cv::Point> UVDARLedDetectAdaptive::applyAdaptiveThreshold(const cv::
 
 
     numberDetectedPoints.push_back(roiDetectedPoints.size());
-    thresholdValue.push_back(optimalThreshold);
-    klDivergence.push_back(minKLDivergence);
+    thresholdValue.push_back(thresholdValue_);
+    klDivergence.push_back(0.0);
     validRoi.push_back(1);
     
 
