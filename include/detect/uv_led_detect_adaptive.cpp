@@ -321,7 +321,7 @@ std::vector<cv::Point> UVDARLedDetectAdaptive::applyAdaptiveThreshold(const cv::
         numberDetectedPoints.push_back(roiDetectedPoints.size());
         thresholdValue.push_back(thresholdValue_);
         klDivergence.push_back(0.0);
-        validRoi.push_back(-1);
+        validRoi.push_back(0);
         
         //Return empty roiDetectedPoints
 
