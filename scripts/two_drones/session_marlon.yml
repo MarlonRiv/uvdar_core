@@ -54,25 +54,33 @@ windows:
         - export UAV_NAME=uav2; waitForHw; roslaunch mrs_uav_autostart automatic_start.launch
         - 'export UAV_NAME=uav2; waitForControl; rosservice call /$UAV_NAME/hw_api/arming 1; sleep 2; rosservice call /$UAV_NAME/hw_api/offboard'
   - uv_observer:
-        layout: even-vertical
-        panes:
+      layout: even-vertical
+      panes:
         - waitForCompile; gz world --pause=0; sleep 6;  export UAV_NAME=uav1; waitForControl; roslaunch uvdar_core sim_three_sided_combined_marlon.launch use_4DHT:=false
   - slow_down:
       layout: even-vertical
       panes:
         - waitForGazebo; waitForRos; sleep 20; gz physics -u 80
-  - example_waypoint_flier:
+  - uav1_waypoint_flier:
       layout: tiled
       panes:
         - export UAV_NAME=uav1; waitForControl; roslaunch example_waypoint_flier example_waypoint_flier.launch
         - 'history -s rosservice call /$UAV_NAME/example_waypoint_flier/fly_to_first_waypoint'
         - 'history -s rosservice call /$UAV_NAME/example_waypoint_flier/start_waypoints_following'
         - 'history -s rosservice call /$UAV_NAME/example_waypoint_flier/stop_waypoints_following'
-  - trajectories:
+  - uav2_waypoint_flier:
       layout: tiled
       panes:
-        - export UAV_NAME=uav1; history -s rosservice call /'"$UAV_NAME"'/control_manager/start_trajectory_tracking; history -s rosservice call /'"$UAV_NAME"'/control_manager/goto_trajectory_start; history -s roslaunch uvdar_core load_trajectory.launch file:="tx1/line.txt" loop:=true
-  #       - export UAV_NAME=uav2; history -s rosservice call /'"$UAV_NAME"'/control_manager/start_trajectory_tracking; history -s rosservice call /'"$UAV_NAME"'/control_manager/goto_trajectory_start; history -s roslaunch uvdar_core load_trajectory.launch file:="tx2/line.txt" loop:=true
+        - export UAV_NAME=uav2; waitForControl; roslaunch example_waypoint_flier example_waypoint_flier_2.launch
+        - 'export UAV_NAME=uav2; history -s rosservice call /$UAV_NAME/example_waypoint_flier/fly_to_first_waypoint'
+        - 'export UAV_NAME=uav2; history -s rosservice call /$UAV_NAME/example_waypoint_flier/start_waypoints_following'
+        - 'export UAV_NAME=uav2; history -s rosservice call /$UAV_NAME/example_waypoint_flier/stop_waypoints_following'
+  
+ #- trajectories:
+     #layout: tiled
+   # panes:
+   #     - export UAV_NAME=uav1; history -s rosservice call /'"$UAV_NAME"'/control_manager/start_trajectory_tracking; history -s rosservice call /'"$UAV_NAME"'/control_manager/goto_trajectory_start; history -s roslaunch uvdar_core load_trajectory.launch file:="tx1/line.txt" loop:=true
+   #    - export UAV_NAME=uav1; waitForControl; sleep 15;  ~/catkin_ws/src/uvdar_core/scripts/trajectory_generation.py; history -s rosservice call /'"$UAV_NAME"'/control_manager/goto_trajectory_start  
         # - export UAV_NAME=uav3; history -s rosservice call /'"$UAV_NAME"'/control_manager/start_trajectory_tracking; history -s rosservice call /'"$UAV_NAME"'/control_manager/goto_trajectory_start; history -s roslaunch uvdar_core load_trajectory.launch file:="two_tx/tx2_fly_by.txt" loop:=true
   - rviz:
       layout: even-vertical

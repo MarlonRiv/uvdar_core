@@ -71,8 +71,8 @@
 <!-- OR -->
   <group ns="$(arg uav_name)">
 
-    <!-- <node pkg="nodelet" type="nodelet" name="$(arg uav_name)_uvdar_nodelet_manager" args="manager" output="screen" > -->
-    <node pkg="nodelet" type="nodelet" name="$(arg uav_name)_uvdar_nodelet_manager" args="manager" output="screen" launch-prefix="debug_roslaunch">
+     <node pkg="nodelet" type="nodelet" name="$(arg uav_name)_uvdar_nodelet_manager" args="manager" output="screen" >
+        <!-- <node pkg="nodelet" type="nodelet" name="$(arg uav_name)_uvdar_nodelet_manager" args="manager" output="screen" launch-prefix="debug_roslaunch">-->
       <param name="num_worker_threads" value="8" />
     </node>
 
@@ -102,6 +102,7 @@
       <rosparam param="camera_topics"> ["camera_left"] </rosparam>
       <rosparam param="points_seen_topics"> ["points_seen_left"] </rosparam>
       <rosparam param="blinkers_seen_topics"> ["blinkers_seen_back"] </rosparam>
+      <rosparam param="adaptive_logging_topics"> ["adaptive_logging_back"] </rosparam>
 
     
 
@@ -111,6 +112,8 @@
       <remap from="~points_seen_left" to="/$(arg uav_name)/uvdar/points_seen_left"/>
       <remap from="~points_seen_left/sun" to="/$(arg uav_name)/uvdar/points_seen_left/sun"/>
       <remap from="~blinkers_seen_back" to="/$(arg uav_name)/uvdar/blinkers_seen_back"/>
+      <remap from="~adaptive_logging_back" to="/$(arg uav_name)/uvdar/adaptive_logging_back"/>
+      
 
       <remap from="~odometry" to="/$(arg uav_name)/mrs_odometry/new_odom"/>
       <remap from="~imu" to="mavros/imu/data"/>
