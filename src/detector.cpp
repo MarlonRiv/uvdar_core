@@ -48,8 +48,18 @@ public:
     param_loader.loadParam("publish_visualization", _publish_visualization_, bool(false));
 
     param_loader.loadParam("threshold", _threshold_, 200);
+    param_loader.loadParam("adaptive_threshold",_adaptive_threshold_,bool(false));
 
+    //Print adaptive threshold
+    if(_adaptive_threshold_){
+      ROS_INFO_STREAM("[UVDARDetector]: Adaptive thresholding enabled.");
+    }
+    else{
+      ROS_INFO_STREAM("[UVDARDetector]: Adaptive thresholding disabled.");
+    }
 
+    //Hola
+    
 
     /* subscribe to cameras //{ */
     std::vector<std::string> _camera_topics;
@@ -427,7 +437,7 @@ private:
 
 
 
-        if ( ! (uvdf_[image_index]->processImage(
+       /*  if ( ! (uvdf_[image_index]->processImage(
               image->image,
               detected_points_[image_index],
               sun_points_[image_index],
@@ -440,14 +450,14 @@ private:
         }
 
 
-        /*
+        
              //Print the standard points
         for (int i = 0; i < detected_points_[image_index].size(); i++) {
           ROS_INFO_STREAM("[UVDARDetector]: Standard detected point " << i << ": " << detected_points_[image_index][i]);
-        }
+        } */
         
         
-        */
+        ROS_INFO_STREAM("[UVDARDetector]: Processing image with tracking points only.");
 
         if( ! (uvda_[image_index]->processImageAdaptive(
                 image->image,
@@ -463,9 +473,9 @@ private:
 
 
 
-        /*
+        
 
-           //Print the adaptive points
+        //Print the adaptive points
         
         for (int i = 0; i < adaptive_detected_points_[image_index].size(); i++) {
           ROS_INFO_STREAM("[UVDARDetector]: Adaptive detected point " << i << ": " << adaptive_detected_points_[image_index][i]);
@@ -473,7 +483,7 @@ private:
         
         
         
-        */
+        
 
         cv::Mat visualization_image;
         
@@ -582,6 +592,20 @@ private:
       }
       else{
         ROS_INFO_STREAM("[UVDARDetector]: Publishing standard points.");
+
+        ROS_INFO_STREAM("[UVDARDetector]: This is the image index: " << image_index);
+
+        if (detected_points_[image_index].size() > 0){
+          ROS_INFO_STREAM("[UVDARDetector]: Detected points: " << detected_points_[image_index].size());
+        }
+        else{
+          ROS_INFO_STREAM("[UVDARDetector]: No detected points.");
+        }
+
+        //Print the points
+        for (int i = 0; i < detected_points_[image_index].size(); i++) {
+          ROS_INFO_STREAM("[UVDARDetector]: Detected point " << i << ": " << detected_points_[image_index][i]);
+        }
         uvdar_core::ImagePointsWithFloatStamped msg_detected;
         msg_detected.stamp = image->header.stamp;
         msg_detected.image_width = image->image.cols;
@@ -751,6 +775,7 @@ private:
   std::vector<cv::Size> camera_image_sizes_;
 
   int  _threshold_;
+  bool _adaptive_threshold_;
 
   bool _use_masks_;
   std::vector<std::string> _mask_file_names_;

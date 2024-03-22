@@ -16,6 +16,10 @@ windows:
       layout: tiled
       panes:
         - waitForRos; roslaunch mrs_uav_gazebo_simulation simulation.launch world_name:=grass_plane gui:=true
+          #  - gz_rate:
+          #      layout: tiled
+          #      panes:
+          #        - waitForHw; sleep 5; gz physics -u 125
   - status:
       layout: tiled
       panes:
@@ -68,13 +72,13 @@ windows:
         - 'history -s rosservice call /$UAV_NAME/example_waypoint_flier/fly_to_first_waypoint'
         - 'history -s rosservice call /$UAV_NAME/example_waypoint_flier/start_waypoints_following'
         - 'history -s rosservice call /$UAV_NAME/example_waypoint_flier/stop_waypoints_following'
-  - uav2_waypoint_flier:
-      layout: tiled
-      panes:
-        - export UAV_NAME=uav2; waitForControl; roslaunch example_waypoint_flier example_waypoint_flier_2.launch
-        - 'export UAV_NAME=uav2; history -s rosservice call /$UAV_NAME/example_waypoint_flier/fly_to_first_waypoint'
-        - 'export UAV_NAME=uav2; history -s rosservice call /$UAV_NAME/example_waypoint_flier/start_waypoints_following'
-        - 'export UAV_NAME=uav2; history -s rosservice call /$UAV_NAME/example_waypoint_flier/stop_waypoints_following'
+          # - uav2_waypoint_flier:
+          #      layout: tiled
+          #      panes:
+          #        - export UAV_NAME=uav2; waitForControl; roslaunch example_waypoint_flier example_waypoint_flier_2.launch
+          #        - 'export UAV_NAME=uav2; history -s rosservice call /$UAV_NAME/example_waypoint_flier/fly_to_first_waypoint'
+          #        - 'export UAV_NAME=uav2; history -s rosservice call /$UAV_NAME/example_waypoint_flier/start_waypoints_following'
+          #        - 'export UAV_NAME=uav2; history -s rosservice call /$UAV_NAME/example_waypoint_flier/stop_waypoints_following'
   
  #- trajectories:
      #layout: tiled
