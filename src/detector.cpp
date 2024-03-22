@@ -58,7 +58,9 @@ public:
       ROS_INFO_STREAM("[UVDARDetector]: Adaptive thresholding disabled.");
     }
 
-    //Hola
+    //Print threshold
+    ROS_INFO_STREAM("[UVDARDetector]: Threshold: " << _threshold_);
+    
     
 
     /* subscribe to cameras //{ */
