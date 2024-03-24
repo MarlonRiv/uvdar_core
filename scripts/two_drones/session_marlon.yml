@@ -72,13 +72,13 @@ windows:
         - 'history -s rosservice call /$UAV_NAME/example_waypoint_flier/fly_to_first_waypoint'
         - 'history -s rosservice call /$UAV_NAME/example_waypoint_flier/start_waypoints_following'
         - 'history -s rosservice call /$UAV_NAME/example_waypoint_flier/stop_waypoints_following'
-          # - uav2_waypoint_flier:
-          #      layout: tiled
-          #      panes:
-          #        - export UAV_NAME=uav2; waitForControl; roslaunch example_waypoint_flier example_waypoint_flier_2.launch
-          #        - 'export UAV_NAME=uav2; history -s rosservice call /$UAV_NAME/example_waypoint_flier/fly_to_first_waypoint'
-          #        - 'export UAV_NAME=uav2; history -s rosservice call /$UAV_NAME/example_waypoint_flier/start_waypoints_following'
-          #        - 'export UAV_NAME=uav2; history -s rosservice call /$UAV_NAME/example_waypoint_flier/stop_waypoints_following'
+  - uav2_waypoint_flier:
+      layout: tiled
+      panes:
+        - export UAV_NAME=uav2; waitForControl; roslaunch example_waypoint_flier example_waypoint_flier_2.launch
+        - 'export UAV_NAME=uav2; history -s rosservice call /$UAV_NAME/example_waypoint_flier/fly_to_first_waypoint'
+        - 'export UAV_NAME=uav2; history -s rosservice call /$UAV_NAME/example_waypoint_flier/start_waypoints_following'
+        - 'export UAV_NAME=uav2; history -s rosservice call /$UAV_NAME/example_waypoint_flier/stop_waypoints_following'
   
  #- trajectories:
      #layout: tiled
@@ -97,7 +97,7 @@ windows:
   - record:
       layout: even-vertical
       panes:
-        - 'history -s rosbag record -O ~/Desktop/MRS_Master_Project/rosbags/simulation/standard_topics.bag /uav1/uvdar/adaptive_logging_back /uav1/uvdar/adaptive_logging_left /uav1/uvdar/adaptive_logging_right /uav1/uvdar/blinkers_seen_back /uav1/uvdar/blinkers_seen_left /uav1/uvdar/blinkers_seen_right /uav1/control_manager/control_reference' 
+        - 'history -s rosbag record -O ~/Desktop/MRS_Master_Project/rosbags/simulation/test_standard_topics.bag /uav1/uvdar/adaptive_logging_back /uav1/uvdar/adaptive_logging_left /uav1/uvdar/adaptive_logging_right /uav1/uvdar/blinkers_seen_back /uav1/uvdar/blinkers_seen_left /uav1/uvdar/blinkers_seen_right /uav1/control_manager/control_reference' 
         #- rosbag record -O rosbags/first/omta_38.bag -e "(.*)_camp"
         # - rosbag record -O rosbags/first/omta_39.bag -e "(.*)_camp"
 
