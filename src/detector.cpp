@@ -144,12 +144,8 @@ public:
   
     
 
-<<<<<<< HEAD
     ROS_INFO_STREAM("[UVDARDetector]: Initializing " << _camera_count_ << " cameras...");
      // Create callbacks, timers and process objects for each camera
-=======
-    // Create callbacks, timers and process objects for each camera
->>>>>>> upstream/master
     for (unsigned int i = 0; i < _camera_count_; ++i) {
       image_callback_t callback = [image_index=i,this] (const sensor_msgs::ImageConstPtr& image_msg) { 
         callbackImage(image_msg, image_index);
@@ -167,11 +163,12 @@ public:
       detected_points_.push_back(std::vector<cv::Point>());
       sun_points_.push_back(std::vector<cv::Point>());
 
+      //mutex_camera_image_.push_back(std::make_unique<std::mutex>());
+
       /* image_yet_received_.push_back(false); */
       /* initial_delay_start_.push_back(ros::Time::now()); */
 
       /* mutex_camera_image_.push_back(std::make_unique<std::mutex>()); */
-
 
       ROS_INFO("[UVDARDetector]: Initializing FAST-based marker detection...");
       uvdf_ = std::make_unique<UVDARLedDetectFASTGPU>(
@@ -324,8 +321,20 @@ private:
     timer_process_[image_index] = nh.createTimer(ros::Duration(0), boost::bind(&UVDARDetector::processSingleImage, this, _1, image, image_index), true, true);
     camera_image_sizes_[image_index] = image->image.size();
 
-<<<<<<< HEAD
     //ROS_INFO_STREAM("[UVDARDetector]: Received image from camera " << image_index << " with size " << image->image.cols << "x" << image->image.rows << " and encoding " << image->encoding);
+
+    if (!all_cameras_detected_){
+      unsigned int i = 0;
+      for (auto sz : camera_image_sizes_){
+        if ( (sz.width > 0) && (sz.height > 0) ){
+          i++;
+        }
+      }
+
+      if ( i == _camera_count_){
+        all_cameras_detected_ = true;
+      }
+    }
   }
   //}
 
@@ -389,7 +398,7 @@ private:
   */
     ROS_INFO_STREAM("[UVDARDetector]: Processing image with standard thresholding.");
 
-    if ( ! (uvdf_[image_index]->processImage(
+    if ( ! (uvdf_->processImage(
               image->image,
               detected_points_[image_index],
               sun_points_[image_index],
@@ -473,20 +482,6 @@ private:
     msg_adaptive.roi_is_valid = adaptiveData.validRoi;
 
     pub_adaptive_logging_[image_index].publish(msg_adaptive);
-=======
-    if (!all_cameras_detected_){
-      unsigned int i = 0;
-      for (auto sz : camera_image_sizes_){
-        if ( (sz.width > 0) && (sz.height > 0) ){
-          i++;
-        }
-      }
-
-      if ( i == _camera_count_){
-        all_cameras_detected_ = true;
-      }
-    }
->>>>>>> upstream/master
   }
   //}
 
@@ -559,7 +554,6 @@ private:
       return;
     }
 
-<<<<<<< HEAD
     if( _adaptive_threshold_ && trackingPointsPerCamera[image_index].size() > 0){
        
       ROS_INFO_STREAM("[UVDARDetector]: Tracking points per camera: " << trackingPointsPerCamera[image_index].size()); 
@@ -571,7 +565,7 @@ private:
       }
       
       {
-        std::scoped_lock lock(*mutex_camera_image_[image_index]);
+        std::scoped_lock lock(mutex_camera_image_);
         images_current_[image_index] = image->image;
         sun_points_[image_index].clear();
         detected_points_[image_index].clear();
@@ -587,7 +581,13 @@ private:
         cv::Mat white_background = cv::Mat::ones(image->image.size(), image->image.type()) * 255;
         uvda_[image_index]->generateVisualizationAdaptive(white_background,visualization_image,adaptive_detected_points_[image_index]);
         publishVisualizationImage(visualization_image);
-=======
+      }
+     
+    }
+    else{
+      
+      ROS_INFO_STREAM("[UVDARDetector]: No tracking points for camera " << image_index);
+
       /* ROS_INFO_STREAM("[UVDARDetector]: Locking cam image mutex " << image_index << "..."); */
     {
       /* std::scoped_lock lock(*mutex_camera_image_[image_index]); */
@@ -596,30 +596,6 @@ private:
       sun_points_[image_index].clear();
       detected_points_[image_index].clear();
 
-      if ( ! (uvdf_->processImage(
-              image->image,
-              detected_points_[image_index],
-              sun_points_[image_index],
-              _use_masks_?image_index:-1
-              )
-            )
-         ){
-        ROS_WARN_STREAM("Failed to extract markers from the image!");
-        return;
->>>>>>> upstream/master
-      }
-     
-    }
-    else{
-      
-      ROS_INFO_STREAM("[UVDARDetector]: No tracking points for camera " << image_index);
-
-      {
-        std::scoped_lock lock(*mutex_camera_image_[image_index]);
-        images_current_[image_index] = image->image;
-        sun_points_[image_index].clear();
-        detected_points_[image_index].clear();
-
         processStandard(image, image_index);
 
         // ROS_INFO_STREAM("Cam" << image_index << ". There are " << detected_points_[image_index].size() << " detected points.");
@@ -627,7 +603,6 @@ private:
       }
 
     }
-    /* ROS_INFO_STREAM("[UVDARDetector]: Unlocking cam image mutex " << image_index << "..."); */
 
     //ROS_INFO_STREAM("Cam" << image_index << ". There are " << detected_points_[image_index].size() << " detected points.");
     //ROS_INFO_STREAM("Cam" << image_index << ". There are " << adaptive_detected_points_[image_index].size() << " detected adaptive points.");
@@ -806,7 +781,10 @@ private:
   std::mutex  mutex_pub_;
   std::vector<ros::Timer> timer_process_;
 
-<<<<<<< HEAD
+  bool uvdf_was_initialized_ = false;
+  ros::Time initial_delay_start_;
+
+
 
   std::vector<ros::Timer> timer_process_tracking_;
 
@@ -820,12 +798,6 @@ private:
   bool received_tracking_points_ = false;
 
   std::vector<ROIData> ROI_data;
-=======
-  bool uvdf_was_initialized_ = false;
-  ros::Time initial_delay_start_;
-
-
->>>>>>> upstream/master
 };
 
 
