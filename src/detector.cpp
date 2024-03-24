@@ -348,10 +348,9 @@ private:
   }
   //}
 
-
- 
   /* publishVisualizationImage //{ */
   void publishVisualizationImage(const cv::Mat& visualization_image) {
+
     if (!visualization_image.empty()) {
         // Convert OpenCV image to ROS message
         cv_bridge::CvImage cv_image;
@@ -369,6 +368,16 @@ private:
 
   /* processStandard //{ */
   void processStandard(const cv_bridge::CvImageConstPtr& image, int image_index){
+  /**
+   * @brief Extracts small bright points from input image
+   * 
+   * @param image - the input image
+   * @param image_index - index of the camera that produced this image
+   * 
+   * @return success
+   * 
+   * 
+  */
     ROS_INFO_STREAM("[UVDARDetector]: Processing image with standard thresholding.");
 
     if ( ! (uvdf_[image_index]->processImage(
@@ -397,6 +406,17 @@ private:
 
   /* processAdaptive //{ */
   void processAdaptive(const cv_bridge::CvImageConstPtr& image, int image_index, const std::vector<cv::Point>& trackingPoints){
+  /**
+   * @brief Extracts adaptively small bright points from input image
+   * 
+   * @param image - the input image
+   * @param image_index - index of the camera that produced this image
+   * @param trackingPoints - the tracking points for the camera
+   * 
+   * @return success
+  */
+
+
     ROS_INFO_STREAM("[UVDARDetector]: Processing image with tracking points only.");
 
     if( ! (uvda_[image_index]->processImageAdaptive(
@@ -418,18 +438,8 @@ private:
 
   }
   //}
-  /* processSingleImage //{ */
 
-  /**
-   * @brief Extracts small bright points from input image and publishes them. Optionally also publishes points corresponding to the sun.
-   *
-   * @param te - timer event - necessary for use of this method as a timer callback
-   * @param image - the input image
-   * @param image_index - index of the camera that produced this image
-   */
-
-
-
+  /* publishAdaptive //{ */
   void publishAdaptive(const cv_bridge::CvImageConstPtr& image, int image_index, const std::vector<cv::Point>& adaptive_detected_points) {
     ROS_INFO_STREAM("[UVDARDetector]: Publishing adaptive points.");
     uvdar_core::ImagePointsWithFloatStamped msg_detected;
@@ -455,8 +465,10 @@ private:
 
     pub_adaptive_logging_[image_index].publish(msg_adaptive);
   }
+  //}
 
 
+  /* publishStandard //{ */
   void publishStandard(const cv_bridge::CvImageConstPtr& image, int image_index, const std::vector<cv::Point>& detected_points) {
     ROS_INFO_STREAM("[UVDARDetector]: Publishing standard points.");
     ROS_INFO_STREAM("[UVDARDetector]: This is the image index: " << image_index);
@@ -484,9 +496,18 @@ private:
     }
     pub_candidate_points_[image_index].publish(msg_detected);
   }
+  //}
 
+  /* processSingleImage //{ */
 
-
+  /**
+   * @brief Extracts small bright points from input image and publishes them. Optionally also publishes points corresponding to the sun.
+   *
+   * @param te - timer event - necessary for use of this method as a timer callback
+   * @param image - the input image
+   * @param image_index - index of the camera that produced this image
+   */
+  
   void processSingleImage([[maybe_unused]] const ros::TimerEvent& te, const cv_bridge::CvImageConstPtr image, int image_index) {
     if (!initialized_){
       ROS_WARN_STREAM_THROTTLE(1.0,"[UVDARDetector]: Not yet initialized, dropping message...");

@@ -104,7 +104,7 @@
       <param name="num_worker_threads" value="8" />
     </node>
 
-    <node name="bluefox_emulator" pkg="nodelet" type="nodelet" args="$(arg nodelet) uvdar/UVDARBluefoxEmulator $(arg nodelet_manager)" output="screen" respawn="false" launch-prefix="bash -c 'sleep 0; $0 $@'">
+    <node name="bluefox_emulator" pkg="nodelet" type="nodelet" args="$(arg nodelet) uvdar/UVDARBluefoxEmulator $(arg nodelet_manager)" output="screen" respawn="false" launch-prefix="bash -c 'sleep 5; $0 $@'">
       <rosparam param="camera_output_topics"> ["camera_left", "camera_right", "camera_back"] </rosparam>
       <rosparam param="calib_files"> ["default", "default", "default"] </rosparam>
       <remap from="~camera_left" to="/$(arg uav_name)/uvdar_bluefox_left/image_raw"/>
@@ -129,7 +129,7 @@
       <param name="publish"         type="bool" value="$(arg publish)"/>
       <param name="justReport" type="bool" value="true"/>
       <param name="threshold" type="int" value="$(arg threshold)"/>
-      <param name="adaptive_threshold" type="bool" value="true"/>
+      <param name="adaptive_threshold" type="bool" value="false"/>
 
       <rosparam param="camera_topics"> ["camera_left", "camera_right", "camera_back"] </rosparam>
       <rosparam param="points_seen_topics"> ["points_seen_left", "points_seen_right", "points_seen_back"] </rosparam>
@@ -162,7 +162,7 @@
     </node>
 
 
-    <node name="blink_processor" pkg="nodelet" type="nodelet" args="load uvdar/UVDARBlinkProcessor $(arg nodelet_manager)" output="screen" respawn="false" launch-prefix="bash -c 'sleep 20; $0 $@'">
+    <node name="blink_processor" pkg="nodelet" type="nodelet" args="load uvdar/UVDARBlinkProcessor $(arg nodelet_manager)" output="screen" respawn="false" launch-prefix="bash -c 'sleep 15; $0 $@'">
     <!-- <node name="UVDARBlinkProcessor" pkg="nodelet" type="nodelet" args="load uvdar/UVDARBlinkProcessor $(arg nodelet_manager)" output="screen" respawn="false" launch-prefix="debug_roslaunch"> -->
 
       <param name="uav_name" type = "string" value="$(arg uav_name)"/>
@@ -236,7 +236,7 @@
       
     
       <!-- <node name="uvdar_pose_calculator_node" pkg="uvdar_core" type="uvdar_pose_calculator_node" output="screen" launch-prefix="debug_roslaunch"> --> 
-    <node name="uvdar_pose_calculator_node" pkg="uvdar_core" type="uvdar_pose_calculator_node" output="screen" > 
+    <node name="uvdar_pose_calculator_node" pkg="uvdar_core" type="uvdar_pose_calculator_node" output="screen" launch-prefix="bash -c 'sleep 20; $0 $@'">> 
         <!-- <node name="uvdar_pose_calculator_node" pkg="uvdar_core" type="uvdar_pose_calculator_node" launch-prefix="valgrind -/-tool=callgrind -/-callgrind-out-file=/home/viktor/callgrind.out -/-instr-atstart=no -/-collect-atstart=yes"> --> 
             <!-- <node name="uvdar_pose_calculator_node" pkg="uvdar_core" type="uvdar_pose_calculator_node" launch-prefix="valgrind -/-tool=callgrind -/-callgrind-out-file=/home/viktor/callgrind.out"> --> 
       <param name="uav_name" type = "string" value="$(arg uav_name)"/>

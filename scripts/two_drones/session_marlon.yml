@@ -97,7 +97,7 @@ windows:
   - record:
       layout: even-vertical
       panes:
-        # - waitForRos; sleep 3; rosbag record -O ~/Desktop/MRS_Master_Project/rosbags/simulation/sim_otsu_topics.bag /uav1/uvdar/adaptive_logging_back /uav1/uvdar/adaptive_logging_left /uav1/uvdar/adaptive_logging_right --duration=3m  
+        - 'history -s rosbag record -O ~/Desktop/MRS_Master_Project/rosbags/simulation/standard_topics.bag /uav1/uvdar/adaptive_logging_back /uav1/uvdar/adaptive_logging_left /uav1/uvdar/adaptive_logging_right /uav1/uvdar/blinkers_seen_back /uav1/uvdar/blinkers_seen_left /uav1/uvdar/blinkers_seen_right /uav1/control_manager/control_reference' 
         #- rosbag record -O rosbags/first/omta_38.bag -e "(.*)_camp"
         # - rosbag record -O rosbags/first/omta_39.bag -e "(.*)_camp"
 
