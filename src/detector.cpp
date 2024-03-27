@@ -589,6 +589,7 @@ private:
       ROS_INFO_STREAM("[UVDARDetector]: No tracking points for camera " << image_index);
 
       /* ROS_INFO_STREAM("[UVDARDetector]: Locking cam image mutex " << image_index << "..."); */
+      
     {
       /* std::scoped_lock lock(*mutex_camera_image_[image_index]); */
       std::scoped_lock lock(mutex_camera_image_);
