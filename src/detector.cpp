@@ -58,6 +58,8 @@ public:
       ROS_INFO_STREAM("[UVDARDetector]: Adaptive thresholding disabled.");
     }
 
+    param_loader.loadParam("initial_delay", _initial_delay_, 5.0);
+
     /* subscribe to cameras //{ */
     std::vector<std::string> _camera_topics;
     param_loader.loadParam("camera_topics", _camera_topics, _camera_topics);
@@ -533,18 +535,14 @@ private:
       return;
     }
 
-    if (!uvdf_was_initialized_){
-      if (!uvdf_->initDelayed(image->image)){
-        ROS_WARN_STREAM_THROTTLE(1.0,"[UVDARDetector]: Failed to initialize, dropping message...");
-        return;
-      }
+    if (!initial_delay_started_){
       initial_delay_start_ = ros::Time::now();
-      uvdf_was_initialized_ = true;
+      initial_delay_started_ = true;
     }
 
-    double initial_delay = 5.0; //seconds. This delay is necessary to avoid strange segmentation faults with software rendering backend for OpenGL used in the buildfarm testing.
-    if ((ros::Time::now() - initial_delay_start_).toSec() < initial_delay){
-      ROS_WARN_STREAM_THROTTLE(1.0, "[UVDARDetector]: Ignoring message for "<< initial_delay <<"s...");
+    /* double initial_delay = 5.0; //seconds. This delay is necessary to avoid strange segmentation faults with software rendering backend for OpenGL used in the buildfarm testing. */
+    if ((ros::Time::now() - initial_delay_start_).toSec() < _initial_delay_){
+      ROS_WARN_STREAM_THROTTLE(1.0, "[UVDARDetector]: Ignoring message for "<< _initial_delay_ <<"s...");
       return;
     }
 
@@ -593,6 +591,15 @@ private:
     {
       /* std::scoped_lock lock(*mutex_camera_image_[image_index]); */
       std::scoped_lock lock(mutex_camera_image_);
+
+      if (!uvdf_was_initialized_){
+        if (!uvdf_->initDelayed(image->image)){
+          ROS_WARN_STREAM_THROTTLE(1.0,"[UVDARDetector]: Failed to initialize, dropping message...");
+          return;
+        }
+        uvdf_was_initialized_ = true;
+      }
+      
       images_current_[image_index] = image->image;
       sun_points_[image_index].clear();
       detected_points_[image_index].clear();
@@ -773,6 +780,8 @@ private:
   int  _threshold_;
   bool _adaptive_threshold_;
 
+  double _initial_delay_ = 5.0;
+
   bool _use_masks_;
   std::vector<std::string> _mask_file_names_;
   std::vector<cv::Mat> _masks_;
@@ -783,6 +792,7 @@ private:
   std::vector<ros::Timer> timer_process_;
 
   bool uvdf_was_initialized_ = false;
+  bool initial_delay_started_ = false;
   ros::Time initial_delay_start_;
 
 
