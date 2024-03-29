@@ -9,12 +9,11 @@ import os
 
 # List of ROS bag files
 bag_files = [
-    os.path.expanduser('~/Desktop/MRS_Master_Project/rosbags/simulation/static_adaptive_topics_5m.bag'),
-    os.path.expanduser('~/Desktop/MRS_Master_Project/rosbags/simulation/static_adaptive_topics_8m.bag'),
-    os.path.expanduser('~/Desktop/MRS_Master_Project/rosbags/simulation/static_adaptive_topics_11m.bag'),
-    os.path.expanduser('~/Desktop/MRS_Master_Project/rosbags/simulation/static_adaptive_topics_14m.bag'),
-    os.path.expanduser('~/Desktop/MRS_Master_Project/rosbags/simulation/static_adaptive_topics_17m.bag'),
-    os.path.expanduser('~/Desktop/MRS_Master_Project/rosbags/simulation/static_adaptive_topics_20m.bag'),
+    os.path.expanduser('~/Desktop/MRS_Master_Project/rosbags/simulation/static_standard_topics_5m_0.4.bag'),
+    os.path.expanduser('~/Desktop/MRS_Master_Project/rosbags/simulation/static_standard_topics_8m_0.4.bag'),
+    os.path.expanduser('~/Desktop/MRS_Master_Project/rosbags/simulation/static_standard_topics_11m_0.4.bag'),
+    os.path.expanduser('~/Desktop/MRS_Master_Project/rosbags/simulation/static_standard_topics_14m_0.4.bag'),
+
     #os.path.expanduser('~/Desktop/MRS_Master_Project/rosbags/simulation/static_standard_topics_8m.bag'),
     #os.path.expanduser('~/Desktop/MRS_Master_Project/rosbags/simulation/static_standard_topics_11m.bag'),
     #os.path.expanduser('~/Desktop/MRS_Master_Project/rosbags/simulation/static_standard_topics_14m.bag'),
@@ -26,7 +25,7 @@ bag_files = [
 #output_csv = os.path.expanduser('~/Desktop/MRS_Master_Project/rosbags/simulation/standard_test_3.csv')
 
 # Output CSV file
-output_csv = os.path.expanduser('~/Desktop/MRS_Master_Project/rosbags/simulation/combined_static_adaptive.csv')
+output_csv = os.path.expanduser('~/Desktop/MRS_Master_Project/rosbags/simulation/static_standard_heading_0.4.csv')
 
 # Define the topics to extract
 topics = ['/uav1/uvdar/blinkers_seen_left','/uav1/uvdar/blinkers_seen_right','/uav1/control_manager/control_reference']
@@ -43,7 +42,9 @@ for bag_path in bag_files:
             entry = {'timestamp': t.to_sec(), 'distance_x': None, 'value': None}
             if topic in ['/uav1/uvdar/blinkers_seen_left', '/uav1/uvdar/blinkers_seen_right']:
                 # Assuming you're interested in the first point's value if multiple points exist
-                entry['value'] = msg.points[0].value if msg.points else None
+                #entry['value'] = msg.points[0].value if msg.points else None
+                #Take all the values
+                entry['value'] = [point.value for point in msg.points]
             elif topic == '/uav1/control_manager/control_reference':
                 # Extract the x position as distance
                 entry['distance_x'] = msg.pose.pose.position.x
