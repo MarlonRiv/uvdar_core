@@ -9,6 +9,8 @@
 #include <tuple> // Include for std::tuple
 #include <vector>
 #include <algorithm>
+#include <string>
+
 
 
 
@@ -23,12 +25,14 @@ struct PointComparator {
 
 namespace uvdar {
 
-UVDARLedDetectAdaptive::UVDARLedDetectAdaptive(int neighborhoodSize, double point_similarity_threshold) : neighborhoodSize_(neighborhoodSize),point_similarity_threshold_(point_similarity_threshold){}
+UVDARLedDetectAdaptive::UVDARLedDetectAdaptive(int neighborhoodSize, double point_similarity_threshold, std::string adaptive_method) : neighborhoodSize_(neighborhoodSize),
+point_similarity_threshold_(point_similarity_threshold), adaptive_method_(adaptive_method){}
 
 UVDARLedDetectAdaptive::~UVDARLedDetectAdaptive() {}
 
 /* processImageAdaptive //{ */
-bool UVDARLedDetectAdaptive::processImageAdaptive(const cv::Mat& inputImage, const std::vector<cv::Point>& trackingPoints, std::vector<cv::Point>& detectedPoints, const std::vector<cv::Point>& standardPoints) {
+bool UVDARLedDetectAdaptive::processImageAdaptive(const cv::Mat& inputImage, const std::vector<cv::Point>& trackingPoints, std::vector<cv::Point>& detectedPoints,
+const std::vector<cv::Point>& standardPoints) {
 
     /**
      * @brief: This function processes the input image to detect UV-LEDs using adaptive thresholding
@@ -171,12 +175,26 @@ std::vector<cv::Point> UVDARLedDetectAdaptive::applyAdaptiveThreshold(const cv::
 
     cv::Mat binaryRoi;
     //cv::adaptiveThreshold(roiImage, binaryRoi, 255, cv::ADAPTIVE_THRESH_GAUSSIAN_C, cv::THRESH_BINARY, 11, 2);
+
+    if( adaptive_method_ == "Otsu"){
+        //Apply Otsu's thresholding with the enhanced ROI
+        int thresholdValue= cv::threshold(enhancedImage, binaryRoi, 0, 255, cv::THRESH_BINARY | cv::THRESH_OTSU); // Apply Otsu's thresholding
+        thresholdValue_ = thresholdValue;
+    }
+    else{
+        //Apply Otsu's thresholding with the enhanced ROI
+        //int thresholdValue_= cv::threshold(enhancedImage, binaryRoi, 0, 255, cv::THRESH_BINARY | cv::THRESH_OTSU); // Apply Otsu's thresholding
+        auto [thresholdValue, minKLDivergence] = findOptimalThresholdUsingKL(enhancedImage);
+        thresholdValue_ = thresholdValue;
+        minKLDivergence_ = minKLDivergence;
+        cv::threshold(enhancedImage,binaryRoi, thresholdValue_, 255, cv::THRESH_BINARY);
+    }
     //Apply Otsu's thresholding with the enhanced ROI
     //int thresholdValue_= cv::threshold(enhancedImage, binaryRoi, 0, 255, cv::THRESH_BINARY | cv::THRESH_OTSU); // Apply Otsu's thresholding
 
 
-    auto [optimalThreshold, minKLDivergence] = findOptimalThresholdUsingKL(enhancedImage);
-    cv::threshold(enhancedImage,binaryRoi, optimalThreshold, 255, cv::THRESH_BINARY);
+    //auto [optimalThreshold, minKLDivergence] = findOptimalThresholdUsingKL(enhancedImage);
+    //cv::threshold(enhancedImage,binaryRoi, optimalThreshold, 255, cv::THRESH_BINARY);
 
 
     //saveRoiImage(binaryRoi, point, roiIndex_++, thresholdValue, 0.0);
@@ -321,8 +339,14 @@ std::vector<cv::Point> UVDARLedDetectAdaptive::applyAdaptiveThreshold(const cv::
         //saveRoiImage(binaryRoi, point, roiIndex_++, thresholdValue, -1.0);
 
         numberDetectedPoints.push_back(roiDetectedPoints.size());
-        thresholdValue.push_back(optimalThreshold);
-        klDivergence.push_back(minKLDivergence);
+        thresholdValue.push_back(thresholdValue_);
+        if(adaptive_method_ == "Otsu"){
+            klDivergence.push_back(-1.0);
+        }
+        else{
+            klDivergence.push_back(minKLDivergence_);
+        }
+        //klDivergence.push_back(minKLDivergence);
         validRoi.push_back(0);
         
         //Return empty roiDetectedPoints
@@ -344,12 +368,14 @@ std::vector<cv::Point> UVDARLedDetectAdaptive::applyAdaptiveThreshold(const cv::
 
 
     numberDetectedPoints.push_back(roiDetectedPoints.size());
-    thresholdValue.push_back(optimalThreshold);
-    klDivergence.push_back(minKLDivergence);
+    thresholdValue.push_back(thresholdValue_);
+    if(adaptive_method_ == "Otsu"){
+        klDivergence.push_back(-1.0);
+    }
+    else{
+        klDivergence.push_back(minKLDivergence_);
+    }
     validRoi.push_back(1);
-    
-
-
 
     return roiDetectedPoints;
     }

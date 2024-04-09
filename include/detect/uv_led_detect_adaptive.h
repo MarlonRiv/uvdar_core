@@ -11,6 +11,8 @@
 #include <iomanip> // Include for std::fixed and std::setprecision
 #include <tuple> // Include for std::tuple
 #include <algorithm>
+#include <iostream>
+#include <string>
 
 
 struct ROIData{
@@ -26,7 +28,7 @@ namespace uvdar {
 
 class UVDARLedDetectAdaptive{
 public:
-    UVDARLedDetectAdaptive(int neighborhoodSize = 25, double point_similarity_threshold = 5.0);
+    UVDARLedDetectAdaptive(int neighborhoodSize = 25, double point_similarity_threshold = 5.0, std::string adaptive_method = "Otsu");
     ~UVDARLedDetectAdaptive();
 
     bool processImageAdaptive(const cv::Mat& inputImage, const std::vector<cv::Point>& trackingPoints, std::vector<cv::Point>& detectedPoints, const std::vector<cv::Point>& standardPoints);
@@ -62,7 +64,11 @@ private:
     void saveRoiImage(const cv::Mat& binaryRoi, const cv::Point& center, int index, int thresholdValue, double klDivergence);
 
     int neighborhoodSize_;
+    int thresholdValue_;
+    double minKLDivergence_;
+    
     double point_similarity_threshold_;
+    std::string adaptive_method_;
     int roiIndex_;
     int MAX_SIZE = 50;
     int MIN_SIZE = 5;

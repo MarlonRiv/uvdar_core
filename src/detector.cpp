@@ -24,6 +24,10 @@
 #include "detect/uv_led_detect_adaptive.h"
 
 #include <sensor_msgs/Image.h>
+#include <stdlib.h>
+#include <vector>
+#include <string>
+
 
 
 namespace enc = sensor_msgs::image_encodings;
@@ -49,10 +53,14 @@ public:
 
     param_loader.loadParam("threshold", _threshold_, 200);
     param_loader.loadParam("adaptive_threshold",_adaptive_threshold_,bool(false));
+    param_loader.loadParam("adaptive_method",_adaptive_method_,std::string("Otsu"));
 
     //Print adaptive threshold
     if(_adaptive_threshold_){
       ROS_INFO_STREAM("[UVDARDetector]: Adaptive thresholding enabled.");
+
+      //Print selected adaptive method
+      ROS_INFO_STREAM("[UVDARDetector]: Adaptive method: " << _adaptive_method_);
     }
     else{
       ROS_INFO_STREAM("[UVDARDetector]: Adaptive thresholding disabled.");
@@ -128,7 +136,8 @@ public:
         ROS_INFO("[UVDARDetector]: Initializing ADAPTIVE-based marker detection...");
         uvda_.push_back(std::make_unique<UVDARLedDetectAdaptive>(
               20,
-              5.0
+              5.0,
+              _adaptive_method_
               ));
         if (!uvda_.back()){
           ROS_ERROR("[UVDARDetector]: Failed to initialize ADAPTIVE-based marker detection!");
@@ -779,6 +788,7 @@ private:
 
   int  _threshold_;
   bool _adaptive_threshold_;
+  std::string _adaptive_method_;
 
   double _initial_delay_ = 5.0;
 
