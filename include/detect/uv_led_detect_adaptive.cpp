@@ -363,7 +363,7 @@ std::vector<cv::Point> UVDARLedDetectAdaptive::applyAdaptiveThreshold(const cv::
     //lastProcessedBinaryROIs_.push_back(new_binaryRoi); // Store the binary ROI (For debugging/visualization)
     // Store the binary ROI (For debugging/visualization)
     lastProcessedBinaryROIs_.push_back(binaryRoi);
-    //saveRoiImage(binaryRoi, point, roiIndex_++, optimalThreshold, 1.0);
+    //saveRoiImage(binaryRoi, point, roiIndex_++, thresholdValue_, 1.0);
     //std::cout << "[UVDARLedDetectAdaptive]: ADDING ROI DETECTED POINTS: " << roiDetectedPoints.size() << std::endl;
 
 

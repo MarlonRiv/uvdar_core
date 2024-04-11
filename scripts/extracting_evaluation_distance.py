@@ -9,7 +9,12 @@ import os
 
 # List of ROS bag files
 bag_files = [
-    os.path.expanduser('~/Desktop/MRS_Master_Project/rosbags/simulation/otsu_dynamic_adaptive_topics.bag')
+    os.path.expanduser('~/Desktop/MRS_Master_Project/rosbags/simulation/heading_experiments/static_static_topics_5m_0.4.bag'),
+    os.path.expanduser('~/Desktop/MRS_Master_Project/rosbags/simulation/heading_experiments/static_static_topics_8m_0.4.bag'),
+    os.path.expanduser('~/Desktop/MRS_Master_Project/rosbags/simulation/heading_experiments/static_static_topics_11m_0.4.bag'),
+    os.path.expanduser('~/Desktop/MRS_Master_Project/rosbags/simulation/heading_experiments/static_static_topics_14m_0.4.bag'),
+    
+  
 
     #os.path.expanduser('~/Desktop/MRS_Master_Project/rosbags/simulation/static_standard_topics_8m.bag'),
     #os.path.expanduser('~/Desktop/MRS_Master_Project/rosbags/simulation/static_standard_topics_11m.bag'),
@@ -22,7 +27,7 @@ bag_files = [
 #output_csv = os.path.expanduser('~/Desktop/MRS_Master_Project/rosbags/simulation/standard_test_3.csv')
 
 # Output CSV file
-output_csv = os.path.expanduser('~/Desktop/MRS_Master_Project/rosbags/simulation/otsu_dynamic_adaptive_v2.csv')
+output_csv = os.path.expanduser('~/Desktop/MRS_Master_Project/rosbags/simulation/raw_csv/static_static_heading_experiment_v3.csv')
 
 # Define the topics to extract
 topics = ['/uav1/uvdar/blinkers_seen_left','/uav1/uvdar/blinkers_seen_right','/uav1/control_manager/control_reference']
