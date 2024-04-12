@@ -96,7 +96,7 @@ const std::vector<cv::Point>& standardPoints) {
         }
     }
 
-    //std::vector<cv::Point> final_detected_points = mergePoints(detectedPoints, standardPoints, point_similarity_threshold_);
+    std::vector<cv::Point> final_detected_points = mergePoints(detectedPoints, standardPoints, point_similarity_threshold_);
     
 
     /*
@@ -107,7 +107,7 @@ const std::vector<cv::Point>& standardPoints) {
     }
     
     */
-    //detectedPoints = final_detected_points;
+    detectedPoints = final_detected_points;
     //standardPoints = final_detected_points;
     
     //Fail if no points are detected TODO
@@ -673,7 +673,7 @@ void UVDARLedDetectAdaptive::generateVisualizationAdaptive(const cv::Mat& inputI
     */
 
     // Create a copy of the current image for visualization
-    //Set the a black background with the same size as the input image
+    //3the a black background with the same size as the input image
     
     visualization_image = inputImage.clone();
 
