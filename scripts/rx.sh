@@ -55,7 +55,7 @@ input=(
 '
   'uav_waypoint_flier' 'export '"$UAV_NAME"'; waitForControl; roslaunch example_waypoint_flier example_waypoint_flier.launch; history -s rosservice call /'"$UAV_NAME"'/example_waypoint_flier/fly_to_first_waypoint; export '"$UAV_NAME"'; history -s rosservice call /'"$UAV_NAME"'/example_waypoint_flier/start_waypoints_following;export '"$UAV_NAME"'; history -s rosservice call /'"$UAV_NAME"'/example_waypoint_flier/stop_waypoints_following;
 '
-  'record' 'waitForRos; history -s rosbag record -O ~/Desktop/MRS_Master_Project/rosbags/simulation/static_static_topics_5m_0.4.bag /uav1/uvdar/adaptive_logging_back /uav1/uvdar/adaptive_logging_left /uav1/uvdar/adaptive_logging_right /uav1/uvdar/blinkers_seen_back /uav1/uvdar/blinkers_seen_left /uav1/uvdar/blinkers_seen_right /uav1/control_manager/control_reference --duration=30s;
+  'record' 'waitForRos; history -s rosbag record -O ~/bag_files/marlon/exp1/static_static_topics_5m_0.4.bag /uav1/uvdar/adaptive_logging_back /uav1/uvdar/adaptive_logging_left /uav1/uvdar/adaptive_logging_right /uav1/uvdar/blinkers_seen_back /uav1/uvdar/blinkers_seen_left /uav1/uvdar/blinkers_seen_right /uav1/control_manager/control_reference --duration=30s;
 '
 # do NOT modify the command list below
   'EstimDiag' 'waitForHw; rostopic echo /'"$UAV_NAME"'/estimation_manager/diagnostics
