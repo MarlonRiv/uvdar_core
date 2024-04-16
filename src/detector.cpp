@@ -460,10 +460,10 @@ private:
       return;
     }
 
-    //Print the adaptive points
+   /*  //Print the adaptive points
     for (int i = 0; i < static_cast<int>(adaptive_detected_points_[image_index].size()); i++) {
       ROS_INFO_STREAM("[UVDARDetector]: Adaptive detected point " << i << ": " << adaptive_detected_points_[image_index][i]);
-    }
+    } */
 
   }
   //}
@@ -508,10 +508,10 @@ private:
       ROS_INFO_STREAM("[UVDARDetector]: No detected points.");
     }
 
-    // Print the points
+  /*   // Print the points
     for (size_t i = 0; i < detected_points.size(); i++) {
       ROS_INFO_STREAM("[UVDARDetector]: Detected point " << i << ": " << detected_points[i]);
-    }
+    } */
     
     uvdar_core::ImagePointsWithFloatStamped msg_detected;
     msg_detected.stamp = image->header.stamp;
@@ -566,10 +566,10 @@ private:
       ROS_INFO_STREAM("[UVDARDetector]: Tracking points per camera: " << trackingPointsPerCamera[image_index].size()); 
       received_tracking_points_ = true;
 
-      //Print the points
+      /* //Print the points
       for (int i = 0; i < static_cast<int>(trackingPointsPerCamera[image_index].size()); i++) {
         ROS_INFO_STREAM("[UVDARDetector]: Tracking point " << i << ": " << trackingPointsPerCamera[image_index][i]);
-      }
+      } */
       
       {
         std::scoped_lock lock(mutex_camera_image_);
@@ -579,9 +579,9 @@ private:
         adaptive_detected_points_[image_index].clear();
 
         //TODO: Check if its worth it, this to be able to detect new points that where not currently detected
-        //processStandard(image, image_index);
+        processStandard(image, image_index);
 
-        ROS_INFO_STREAM("[UVDARDetector]: Processing image with tracking points only.");
+        //ROS_INFO_STREAM("[UVDARDetector]: Processing image with tracking points only.");
         processAdaptive(image, image_index, trackingPointsPerCamera[image_index]);
         
         cv::Mat visualization_image;

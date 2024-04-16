@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 import rosbag
 import csv
-from geometry_msgs.msg import Point
 import os
 
 
@@ -9,12 +8,7 @@ import os
 
 # List of ROS bag files
 bag_files = [
-    os.path.expanduser('~/Desktop/MRS_Master_Project/rosbags/simulation/heading_experiments/static_static_topics_5m_0.4.bag'),
-    os.path.expanduser('~/Desktop/MRS_Master_Project/rosbags/simulation/heading_experiments/static_static_topics_8m_0.4.bag'),
-    os.path.expanduser('~/Desktop/MRS_Master_Project/rosbags/simulation/heading_experiments/static_static_topics_11m_0.4.bag'),
-    os.path.expanduser('~/Desktop/MRS_Master_Project/rosbags/simulation/heading_experiments/static_static_topics_14m_0.4.bag'),
-    
-  
+    os.path.expanduser('~/Desktop/MRS_Master_Project/rosbags/simulation/multi/otsu_multiple_topics.bag'),
 
     #os.path.expanduser('~/Desktop/MRS_Master_Project/rosbags/simulation/static_standard_topics_8m.bag'),
     #os.path.expanduser('~/Desktop/MRS_Master_Project/rosbags/simulation/static_standard_topics_11m.bag'),
@@ -27,13 +21,12 @@ bag_files = [
 #output_csv = os.path.expanduser('~/Desktop/MRS_Master_Project/rosbags/simulation/standard_test_3.csv')
 
 # Output CSV file
-output_csv = os.path.expanduser('~/Desktop/MRS_Master_Project/rosbags/simulation/raw_csv/static_static_heading_experiment_v3.csv')
+output_csv = os.path.expanduser('~/Desktop/MRS_Master_Project/rosbags/simulation/raw_csv/otsu_multiple_topics.csv')
 
 # Define the topics to extract
 topics = ['/uav1/uvdar/blinkers_seen_left','/uav1/uvdar/blinkers_seen_right','/uav1/control_manager/control_reference']
 
 
-# Initialize an empty list to store combined data from all bag files
 combined_data = []
 
 # Process each bag file
@@ -43,7 +36,6 @@ for bag_path in bag_files:
         for topic, msg, t in bag.read_messages(topics=topics):
             entry = {'timestamp': t.to_sec(), 'distance_x': None, 'value': None}
             if topic in ['/uav1/uvdar/blinkers_seen_left', '/uav1/uvdar/blinkers_seen_right']:
-                # Assuming you're interested in the first point's value if multiple points exist
                 #entry['value'] = msg.points[0].value if msg.points else None
                 #Take all the values
                 entry['value'] = [point.value for point in msg.points]

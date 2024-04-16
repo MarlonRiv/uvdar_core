@@ -65,7 +65,7 @@ const std::vector<cv::Point>& standardPoints) {
 
 
     //Print size of tracking points
-    std::cout << "[UVDARLedDetectAdaptive]: TRACKING POINTS SIZE: " << trackingPoints.size() << std::endl;
+    //std::cout << "[UVDARLedDetectAdaptive]: TRACKING POINTS SIZE: " << trackingPoints.size() << std::endl;
 
 
     if (trackingPoints.size() == 0 || trackingPoints.size() > 50) {
@@ -76,14 +76,14 @@ const std::vector<cv::Point>& standardPoints) {
     // Process each tracking point
     for (const auto& point : trackingPoints) {
         // Apply adaptive thresholding to the ROI around the tracking point
-        std::cout << "[UVDARLedDetectAdaptive]: PROCESSING TRACKING POINT: " << point << std::endl;
+        //std::cout << "[UVDARLedDetectAdaptive]: PROCESSING TRACKING POINT: " << point << std::endl;
         std::vector<cv::Point> roiDetectedPoints = applyAdaptiveThreshold(inputImage, point, neighborhoodSize_);
         numRois++;
         
 
         // Check if the detected points are empty
         if (roiDetectedPoints.empty()){
-            std::cout << "[UVDARLedDetectAdaptive]: EMPTY ROI DETECTED POINTS" << std::endl;
+            //std::cout << "[UVDARLedDetectAdaptive]: EMPTY ROI DETECTED POINTS" << std::endl;
             continue;
         }
         // Check each point for uniqueness before adding
@@ -332,7 +332,7 @@ std::vector<cv::Point> UVDARLedDetectAdaptive::applyAdaptiveThreshold(const cv::
 
     // Detect points within this ROI
     std::vector<cv::Point> roiDetectedPoints = detectPointsFromRoi(binaryRoi, roi);
-    std::cout << "[UVDARLedDetectAdaptive]: ROI DETECTED POINTS: " << roiDetectedPoints.size() << std::endl;
+    //std::cout << "[UVDARLedDetectAdaptive]: ROI DETECTED POINTS: " << roiDetectedPoints.size() << std::endl;
 
     if (roiDetectedPoints.size() > 3){
         //std::cout << "[UVDARLedDetectAdaptive]: NOISY ROI: " << roiDetectedPoints.size() << std::endl;
@@ -647,8 +647,8 @@ std::tuple<int, double> UVDARLedDetectAdaptive::findOptimalThresholdUsingKL(cons
     }
 
     //Print the minKLDivergence and optimalThreshold
-    std::cout << "[UVDARLedDetectAdaptive]: MIN KL DIVERGENCE: " << minKLDivergence << std::endl;
-    std::cout << "[UVDARLedDetectAdaptive]: OPTIMAL THRESHOLD: " << optimalThreshold << std::endl;
+    //std::cout << "[UVDARLedDetectAdaptive]: MIN KL DIVERGENCE: " << minKLDivergence << std::endl;
+    //std::cout << "[UVDARLedDetectAdaptive]: OPTIMAL THRESHOLD: " << optimalThreshold << std::endl;
 
 
     return std::make_tuple(optimalThreshold, minKLDivergence);
