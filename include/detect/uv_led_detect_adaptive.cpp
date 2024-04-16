@@ -520,33 +520,34 @@ std::vector<cv::Point> UVDARLedDetectAdaptive::mergePoints(const std::vector<cv:
 }
 //}
 
+
+
 /* calculateKLDivergence //{ */
-// Function to calculate KL divergence
-double UVDARLedDetectAdaptive::calculateKLDivergence(const std::vector<double>& segmentHist, const std::vector<double>& overallHist) {
-    /**
-     * @brief: This function calculates the Kullback-Leibler divergence between two distributions
-     *  
-     * Args:
-     * segmentHist: The histogram of the segment
-     * overallHist: The histogram of the overall image
-     *  
-     * @returns:
-     * klDivergence: The Kullback-Leibler divergence
-     */
+    // Function to calculate KL divergence
+    double UVDARLedDetectAdaptive::calculateKLDivergence(
+        const std::vector<double>& segmentHist, 
+        const std::vector<double>& overallHist, 
+        size_t limit) {  // Add a 'limit' parameter to restrict calculations
 
+        /**
+        * @brief: This function calculates the Kullback-Leibler divergence between two distributions
+        *  
+        * Args:
+        * segmentHist: The histogram of the segment
+        * overallHist: The histogram of the overall image
+        * limit: The index up to which the KL divergence should be calculated
+        *  
+        * @returns:
+        * klDivergence: The Kullback-Leibler divergence
+        */
 
-    
-    //print size of segmentHist and overallHist
-    double klDivergence = 0.0;
-    for (size_t i = 0; i < overallHist.size(); ++i) {
-        // Make sure we only calculate where both distributions have positive values
-        if (segmentHist[i] > 0 && overallHist[i] > 0) {
-            klDivergence += overallHist[i] * log(overallHist[i] / segmentHist[i]);
+        double klDivergence = 0.0;
+        for (size_t i = 0; i < limit; ++i) {  // Only iterate up to the given 'limit'
+            if (segmentHist[i] > 0 && overallHist[i] > 0) {
+                klDivergence += overallHist[i] * log(overallHist[i] / segmentHist[i]);
+            }
         }
-    }
-    return klDivergence;
-    
-    
+        return klDivergence;
     
 
    /*
@@ -633,7 +634,7 @@ std::tuple<int, double> UVDARLedDetectAdaptive::findOptimalThresholdUsingKL(cons
         Q[i] = hist.at<float>(i);
     }
 
-    // Iterate over all possible thresholds to find the one that minimizes the KL divergence
+/*     // Iterate over all possible thresholds to find the one that minimizes the KL divergence
     for (int t = 1; t < histSize - 1; ++t) {
         // Split the normalized histogram at threshold t to create segmented distributions
         std::vector<double> P_below(Q.begin(), Q.begin() + t + 1);
@@ -659,8 +660,39 @@ std::tuple<int, double> UVDARLedDetectAdaptive::findOptimalThresholdUsingKL(cons
         if (totalKLDiv < minKLDivergence && totalKLDiv > 0.0) {
             minKLDivergence = totalKLDiv;
             optimalThreshold = t;
+        } */
+
+
+
+    //  maintaining running sums
+    double sumBelow = 0.0, sumAbove = std::accumulate(Q.begin(), Q.end(), 0.0);
+    std::vector<double> P_below(histSize), P_above(histSize);
+    for (int t = 1; t < histSize - 1; ++t) {
+        sumBelow += Q[t - 1];
+        sumAbove -= Q[t - 1];
+
+        if (sumBelow == 0 || sumAbove == 0) continue;  // Skip invalid cases
+
+        P_below[t - 1] = Q[t - 1] / sumBelow;
+        P_above[t - 1] = Q[t - 1] / sumAbove;
+
+        // Calculate partial KL divergences only if thresholds cause significant distribution changes
+        //double klDivBelow = calculateKLDivergence(P_below, Q, t);
+        //double klDivAbove = calculateKLDivergence(P_above, Q, t);
+
+        // When calculating divergence below the threshold
+        double klDivBelow = calculateKLDivergence(P_below, Q, t + 1);
+
+        // When calculating divergence above the threshold
+        double klDivAbove = calculateKLDivergence(P_above, Q, histSize - t);
+        double totalKLDiv = klDivBelow + klDivAbove;
+
+        if (totalKLDiv < minKLDivergence) {
+            minKLDivergence = totalKLDiv;
+            optimalThreshold = t;
         }
     }
+    
 
     //Print the minKLDivergence and optimalThreshold
     //std::cout << "[UVDARLedDetectAdaptive]: MIN KL DIVERGENCE: " << minKLDivergence << std::endl;

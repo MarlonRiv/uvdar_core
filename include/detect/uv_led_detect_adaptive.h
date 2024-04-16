@@ -56,7 +56,7 @@ private:
 
     std::vector<cv::Point> mergePoints(const std::vector<cv::Point>& adaptivePoints,const std::vector<cv::Point>& standardPoints, double threshold);
 
-    double calculateKLDivergence(const std::vector<double>& segmentHist, const std::vector<double>& overallHist);
+    double calculateKLDivergence(const std::vector<double>& segmentHist, const std::vector<double>& overallHist, size_t limit);
     double calculateKLDivergence2(const cv::Mat& hist, const std::vector<double>& Q, int start, int end);
 
     std::tuple<int, double> findOptimalThresholdUsingKL(const cv::Mat& roiImage);
