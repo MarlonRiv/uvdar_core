@@ -185,7 +185,7 @@ std::vector<cv::Point> UVDARLedDetectAdaptive::applyAdaptiveThreshold(const cv::
         thresholdValue_ = thresholdValue;
     }
     else{
-        std::cout << "[UVDARLedDetectAdaptive]: APPLYING KL DIVERGENCE" << std::endl;
+        //std::cout << "[UVDARLedDetectAdaptive]: APPLYING KL DIVERGENCE" << std::endl;
         //Apply Otsu's thresholding with the enhanced ROI
         //int thresholdValue_= cv::threshold(enhancedImage, binaryRoi, 0, 255, cv::THRESH_BINARY | cv::THRESH_OTSU); // Apply Otsu's thresholding
         auto [thresholdValue, minKLDivergence] = findOptimalThresholdUsingKL(enhancedImage);
