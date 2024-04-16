@@ -177,7 +177,7 @@ std::vector<cv::Point> UVDARLedDetectAdaptive::applyAdaptiveThreshold(const cv::
     //cv::adaptiveThreshold(roiImage, binaryRoi, 255, cv::ADAPTIVE_THRESH_GAUSSIAN_C, cv::THRESH_BINARY, 11, 2);
 
     //Print the adaptive method
-    std::cout << "[UVDARLedDetectAdaptive]: ADAPTIVE METHOD: " << adaptive_method_ << std::endl;
+    //std::cout << "[UVDARLedDetectAdaptive]: ADAPTIVE METHOD: " << adaptive_method_ << std::endl;
 
     if( adaptive_method_ == "Otsu" || adaptive_method_ == "otsu"){
         //Apply Otsu's thresholding with the enhanced ROI
