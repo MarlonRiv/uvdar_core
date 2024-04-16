@@ -604,6 +604,11 @@ std::tuple<int, double> UVDARLedDetectAdaptive::findOptimalThresholdUsingKL(cons
      * @returns:
      * optimalThreshold: The optimal threshold
      */
+
+
+    if (roiImage.empty()) {
+        throw std::runtime_error("Input image is empty.");
+    }
     
     // Calculate the histogram of the ROI image
     int histSize = 256;
@@ -612,6 +617,11 @@ std::tuple<int, double> UVDARLedDetectAdaptive::findOptimalThresholdUsingKL(cons
     cv::Mat hist;
     cv::calcHist(&roiImage, 1, 0, cv::Mat(), hist, 1, &histSize, &histRange, true, false);
     cv::normalize(hist, hist, 1, 0, cv::NORM_L1, -1, cv::Mat());
+
+
+    if (cv::sum(hist)[0] == 0) {
+        throw std::runtime_error("Histogram normalization failed.");
+    }
 
     double minKLDivergence = std::numeric_limits<double>::max();
     int optimalThreshold = 0;
@@ -632,6 +642,8 @@ std::tuple<int, double> UVDARLedDetectAdaptive::findOptimalThresholdUsingKL(cons
         // Ensure these vectors represent probabilities for their segments by re-normalizing
         double sumBelow = std::accumulate(P_below.begin(), P_below.end(), 0.0);
         double sumAbove = std::accumulate(P_above.begin(), P_above.end(), 0.0);
+
+        if (sumBelow == 0 || sumAbove == 0) continue;  // Skip invalid cases
 
         std::for_each(P_below.begin(), P_below.end(), [sumBelow](double& d) { d /= sumBelow; });
         std::for_each(P_above.begin(), P_above.end(), [sumAbove](double& d) { d /= sumAbove; });
