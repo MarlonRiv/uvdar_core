@@ -179,7 +179,7 @@ std::vector<cv::Point> UVDARLedDetectAdaptive::applyAdaptiveThreshold(const cv::
     //Print the adaptive method
     std::cout << "[UVDARLedDetectAdaptive]: ADAPTIVE METHOD: " << adaptive_method_ << std::endl;
 
-    if( adaptive_method_ == "otsu"){
+    if( adaptive_method_ == "Otsu"){
         //Apply Otsu's thresholding with the enhanced ROI
         int thresholdValue= cv::threshold(enhancedImage, binaryRoi, 0, 255, cv::THRESH_BINARY | cv::THRESH_OTSU); // Apply Otsu's thresholding
         thresholdValue_ = thresholdValue;
