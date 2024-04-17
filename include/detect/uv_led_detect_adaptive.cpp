@@ -189,6 +189,8 @@ std::vector<cv::Point> UVDARLedDetectAdaptive::applyAdaptiveThreshold(const cv::
         //Apply Otsu's thresholding with the enhanced ROI
         //int thresholdValue_= cv::threshold(enhancedImage, binaryRoi, 0, 255, cv::THRESH_BINARY | cv::THRESH_OTSU); // Apply Otsu's thresholding
         auto [thresholdValue, minKLDivergence] = findOptimalThresholdUsingKL(enhancedImage);
+        //Using entropy
+        //auto [thresholdValue, minKLDivergence] = findOptimalThresholdUsingEntropy(enhancedImage);
         thresholdValue_ = thresholdValue;
         minKLDivergence_ = minKLDivergence;
         cv::threshold(enhancedImage,binaryRoi, thresholdValue_, 255, cv::THRESH_BINARY);
@@ -243,7 +245,7 @@ std::vector<cv::Point> UVDARLedDetectAdaptive::applyAdaptiveThreshold(const cv::
     //Get the number of contours
     //std::cout << "[UVDARLedDetectAdaptive]: NUMBER OF CONTOURS: " << contours.size() << std::endl;
 
-    if (contours.size() > 3){
+    if (contours.size() >= 4){
         //Return empty roiDetectedPoints
         std::vector<cv::Point> empty_roiDetectedPoints = {};
         return empty_roiDetectedPoints;
@@ -542,56 +544,33 @@ std::vector<cv::Point> UVDARLedDetectAdaptive::mergePoints(const std::vector<cv:
         */
 
         double klDivergence = 0.0;
-        for (size_t i = 0; i < limit; ++i) {  // Only iterate up to the given 'limit'
+        double epsilon = 1e-10;  // Small value to avoid log(0)
+
+      /*   for (size_t i = 0; i < limit; ++i) {  // Only iterate up to the given 'limit'
             if (segmentHist[i] > 0 && overallHist[i] > 0) {
-                klDivergence += overallHist[i] * log(overallHist[i] / segmentHist[i]);
+                klDivergence += overallHist[i] * log(overallHist[i] / segmentHist[i] + epsilon);
+            }
+        }
+        */
+
+        for (size_t i = 0; i < limit && i < segmentHist.size() && i < overallHist.size(); ++i) {
+            if (segmentHist[i] > 0 && overallHist[i] > 0) {
+                klDivergence += overallHist[i] * log((overallHist[i] + epsilon) / (segmentHist[i] + epsilon));
             }
         }
         return klDivergence;
-    
-
-   /*
-
-      double klDivergence = 0.0;
-    for (size_t i = 0; i < segmentHist.size(); ++i) {
-        // Ensure we only calculate where both distributions have positive values
-        if (segmentHist[i] > 0 && overallHist[i] > 0) {
-            double ratio = segmentHist[i] / overallHist[i];
-            double logValue = log(ratio); // Calculate the logarithm of the ratio
-            double contribution = overallHist[i] * logValue; // Contribution to the KL divergence
-
-            // Debugging prints
-            std::cout << "Bin " << i << ": segmentHist = " << segmentHist[i] << ", overallHist = " << overallHist[i] << std::endl;
-            std::cout << "     Ratio = " << ratio << ", Log(Ratio) = " << logValue << ", Contribution = " << contribution << std::endl;
-
-            klDivergence += contribution;
-        } else if (segmentHist[i] == 0 && overallHist[i] > 0) {
-            // Special case handling if needed, e.g., when segmentHist[i] is 0 but overallHist[i] is not
-            // This scenario contributes 0 to KL divergence as per its mathematical properties but check how you want to handle it
-            std::cout << "Bin " << i << " has segmentHist[i] = 0 and overallHist[i] > 0, which is skipped in calculation." << std::endl;
-        }
-    }
-    std::cout << "Total KL Divergence: " << klDivergence << std::endl;
-    return klDivergence;
-   
-   */
-
-
   
 }
-//}
 
-// Function to calculate KL divergence
-double UVDARLedDetectAdaptive::calculateKLDivergence2(const cv::Mat& hist, const std::vector<double>& Q, int start, int end) {
-    double klDivergence = 0.0;
-    for (int i = start; i <= end; ++i) {
-        double p = hist.at<float>(i);
-        // Assuming Q is normalized and has the same size as hist
-        if (p > 0 && Q[i] > 0) { // Avoid division by zero or log(0)
-            klDivergence += p * log(p / Q[i]);
+
+double UVDARLedDetectAdaptive::calculateEntropy(const std::vector<double>& histSegment) {
+    double entropy = 0.0;
+    for (double p : histSegment) {
+        if (p > 0) {  // Only calculate for positive probabilities to avoid log(0)
+            entropy -= p * log(p);  // Using natural log
         }
     }
-    return klDivergence;
+    return entropy;
 }
 
 /* findOptimalThresholdUsingKL */
@@ -605,6 +584,19 @@ std::tuple<int, double> UVDARLedDetectAdaptive::findOptimalThresholdUsingKL(cons
      * @returns:
      * optimalThreshold: The optimal threshold
      */
+
+    //Print shape of roiImage
+    //std::cout << "[UVDARLedDetectAdaptive]: ROI IMAGE SHAPE: " << roiImage.size() << std::endl;
+    // Assuming 'roiImage' is already in a binary form (0s and 1s)
+    int countZeros = cv::countNonZero(roiImage);
+    int totalPixels = roiImage.total();
+    int countOnes = totalPixels - countZeros;
+
+    //Print the count of zeros and ones
+    //std::cout << "[UVDARLedDetectAdaptive]: COUNT OF ZEROS: " << countZeros << std::endl;
+    //std::cout << "[UVDARLedDetectAdaptive]: COUNT OF ONES: " << countOnes << std::endl;
+
+
 
 
     if (roiImage.empty()) {
@@ -634,69 +626,66 @@ std::tuple<int, double> UVDARLedDetectAdaptive::findOptimalThresholdUsingKL(cons
         Q[i] = hist.at<float>(i);
     }
 
-/*     // Iterate over all possible thresholds to find the one that minimizes the KL divergence
-    for (int t = 1; t < histSize - 1; ++t) {
-        // Split the normalized histogram at threshold t to create segmented distributions
-        std::vector<double> P_below(Q.begin(), Q.begin() + t + 1);
-        std::vector<double> P_above(Q.begin() + t + 1, Q.end());
+    double epsilon = 1e-10;
 
-        // Ensure these vectors represent probabilities for their segments by re-normalizing
-        double sumBelow = std::accumulate(P_below.begin(), P_below.end(), 0.0);
-        double sumAbove = std::accumulate(P_above.begin(), P_above.end(), 0.0);
-
-        if (sumBelow == 0 || sumAbove == 0) continue;  // Skip invalid cases
-
-        std::for_each(P_below.begin(), P_below.end(), [sumBelow](double& d) { d /= sumBelow; });
-        std::for_each(P_above.begin(), P_above.end(), [sumAbove](double& d) { d /= sumAbove; });
-
-        // Calculate the KL divergence for segments below and above the threshold
-        double klDivBelow = calculateKLDivergence(P_below, Q);
-        double klDivAbove = calculateKLDivergence(P_above, Q);
-
-        // Total KL divergence for the current threshold
-        double totalKLDiv = klDivBelow + klDivAbove;
-
-        // Seeking the threshold that minimizes the KL divergence
-        if (totalKLDiv < minKLDivergence && totalKLDiv > 0.0) {
-            minKLDivergence = totalKLDiv;
-            optimalThreshold = t;
-        } */
-
-
-
-    //  maintaining running sums
+    std::vector<double> P_below(histSize, 0), P_above(Q); // Use the full Q for P_above initially
     double sumBelow = 0.0, sumAbove = std::accumulate(Q.begin(), Q.end(), 0.0);
-    std::vector<double> P_below(histSize), P_above(histSize);
     for (int t = 1; t < histSize - 1; ++t) {
         sumBelow += Q[t - 1];
         sumAbove -= Q[t - 1];
+        P_below[t] = sumBelow; // Track cumulative sum below the threshold
 
-        if (sumBelow == 0 || sumAbove == 0) continue;  // Skip invalid cases
+        if (sumBelow == 0 || sumAbove == 0) continue; // Skip invalid cases
 
-        P_below[t - 1] = Q[t - 1] / sumBelow;
-        P_above[t - 1] = Q[t - 1] / sumAbove;
+        // Normalize probabilities up to the current threshold
+        std::vector<double> normalizedP_below(P_below.begin(), P_below.begin() + t + 1);
+        std::vector<double> normalizedP_above(P_above.begin() + t + 1, P_above.end());
 
-        // Calculate partial KL divergences only if thresholds cause significant distribution changes
-        //double klDivBelow = calculateKLDivergence(P_below, Q, t);
-        //double klDivAbove = calculateKLDivergence(P_above, Q, t);
+        for (auto& val : normalizedP_below) val /= sumBelow;
+        for (auto& val : normalizedP_above) val /= sumAbove;
 
-        // When calculating divergence below the threshold
-        double klDivBelow = calculateKLDivergence(P_below, Q, t + 1);
 
-        // When calculating divergence above the threshold
-        double klDivAbove = calculateKLDivergence(P_above, Q, histSize - t);
+        double sumCheck = std::accumulate(normalizedP_below.begin(), normalizedP_below.end(), 0.0);
+        assert(abs(sumCheck - 1.0) < epsilon);  // Ensures sum is close to 1
+
+        sumCheck = std::accumulate(normalizedP_above.begin(), normalizedP_above.end(), 0.0);
+        assert(abs(sumCheck - 1.0) < epsilon);  // Ensures sum is close to 1
+
+        double klDivBelow = calculateKLDivergence(normalizedP_below, Q, t + 1);
+        double klDivAbove = calculateKLDivergence(normalizedP_above, Q, histSize - t - 1);
+
+       /*  std::cout << "Threshold: " << t << std::endl;
+        std::cout << "Sum Below: " << sumBelow << ", Sum Above: " << sumAbove << std::endl;
+        std::cout << "Normalized P_below: ";
+        for (double p : normalizedP_below) std::cout << p << " ";
+        std::cout << std::endl;
+
+        std::cout << "Normalized P_above: ";
+        for (double p : normalizedP_above) std::cout << p << " ";
+        std::cout << std::endl;
+
+        //Print the KL divergence
+        std::cout << "[UVDARLedDetectAdaptive]: KL DIVERGENCE BELOW: " << klDivBelow << std::endl;
+        std::cout << "[UVDARLedDetectAdaptive]: KL DIVERGENCE ABOVE: " << klDivAbove << std::endl; */
+
         double totalKLDiv = klDivBelow + klDivAbove;
 
-        if (totalKLDiv < minKLDivergence) {
+        if (totalKLDiv < minKLDivergence && totalKLDiv > 0.0) {
+            //Print found better threshold
+            //std::cout << "[UVDARLedDetectAdaptive]: FOUND BETTER THRESHOLD: " << t << std::endl;
+            //std::cout << "[UVDARLedDetectAdaptive]: MIN KL DIVERGENCE: " << totalKLDiv << std::endl;
+
             minKLDivergence = totalKLDiv;
             optimalThreshold = t;
         }
+
+
     }
     
 
     //Print the minKLDivergence and optimalThreshold
     //std::cout << "[UVDARLedDetectAdaptive]: MIN KL DIVERGENCE: " << minKLDivergence << std::endl;
-    //std::cout << "[UVDARLedDetectAdaptive]: OPTIMAL THRESHOLD: " << optimalThreshold << std::endl;
+    // /std::cout << "[UVDARLedDetectAdaptive]: OPTIMAL THRESHOLD: " << optimalThreshold << std::endl;
 
 
     return std::make_tuple(optimalThreshold, minKLDivergence);
@@ -704,7 +693,49 @@ std::tuple<int, double> UVDARLedDetectAdaptive::findOptimalThresholdUsingKL(cons
 }
 //}
 
+std::tuple<int, double> UVDARLedDetectAdaptive::findOptimalThresholdUsingEntropy(const cv::Mat& roiImage) {
+    if (roiImage.empty()) {
+        throw std::runtime_error("Input image is empty.");
+    }
 
+    // Calculate the histogram as before
+    int histSize = 256;
+    float range[] = {0, 256};
+    const float* histRange = {range};
+    cv::Mat hist;
+    cv::calcHist(&roiImage, 1, 0, cv::Mat(), hist, 1, &histSize, &histRange, true, false);
+    cv::normalize(hist, hist, 1, 0, cv::NORM_L1, -1, cv::Mat());
+
+    if (cv::sum(hist)[0] == 0) {
+        throw std::runtime_error("Histogram normalization failed.");
+    }
+
+    double maxEntropy = std::numeric_limits<double>::min();
+    int optimalThreshold = 0;
+    std::vector<double> Q(histSize);
+    for (int i = 0; i < histSize; ++i) {
+        Q[i] = hist.at<float>(i);
+    }
+
+    for (int t = 1; t < histSize - 1; ++t) {
+        std::vector<double> P_below(Q.begin(), Q.begin() + t);
+        std::vector<double> P_above(Q.begin() + t, Q.end());
+
+        double entropyBelow = calculateEntropy(P_below);
+        double entropyAbove = calculateEntropy(P_above);
+        double totalEntropy = entropyBelow + entropyAbove;
+
+        if (totalEntropy > maxEntropy) {
+            maxEntropy = totalEntropy;
+            optimalThreshold = t;
+        }
+    }
+
+    //std::cout << "[UVDARLedDetectAdaptive]: MAX ENTROPY: " << maxEntropy << std::endl;
+    //std::cout << "[UVDARLedDetectAdaptive]: OPTIMAL THRESHOLD: " << optimalThreshold << std::endl;
+
+    return std::make_tuple(optimalThreshold, maxEntropy);
+}
 
 /* generateVisualizationAdaptive //{ */
 void UVDARLedDetectAdaptive::generateVisualizationAdaptive(const cv::Mat& inputImage,cv::Mat& visualization_image, const std::vector<cv::Point>& detectedPoints) {
