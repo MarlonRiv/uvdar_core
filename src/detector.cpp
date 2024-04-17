@@ -590,6 +590,9 @@ private:
 
         //ROS_INFO_STREAM("[UVDARDetector]: Processing image with tracking points only.");
         ROS_INFO_STREAM("[UVDARDetector]: Processing image with adaptive thresholding. In camera: " << image_index);
+        //Print number of points given
+        ROS_INFO_STREAM("[UVDARDetector]: Tracking points provided: " << trackingPointsPerCamera[image_index].size());
+
         processAdaptive(image, image_index, trackingPointsPerCamera[image_index]);
         
       }
