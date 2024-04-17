@@ -584,10 +584,10 @@ private:
         //ROS_INFO_STREAM("[UVDARDetector]: Processing image with tracking points only.");
         processAdaptive(image, image_index, trackingPointsPerCamera[image_index]);
         
-        cv::Mat visualization_image;
+       /*  cv::Mat visualization_image;
         cv::Mat white_background = cv::Mat::ones(image->image.size(), image->image.type()) * 255;
         uvda_[image_index]->generateVisualizationAdaptive(white_background,visualization_image,adaptive_detected_points_[image_index]);
-        publishVisualizationImage(visualization_image);
+        publishVisualizationImage(visualization_image);  */
       }
      
     }

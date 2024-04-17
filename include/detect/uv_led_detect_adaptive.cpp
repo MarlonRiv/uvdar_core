@@ -71,9 +71,23 @@ const std::vector<cv::Point>& standardPoints) {
     if (trackingPoints.size() == 0 || trackingPoints.size() > 50) {
         std::cout << "[UVDARLedDetectAdaptive]: INVALID NUMBER OF TRACKING POINTS" << std::endl;
         return false;
-    }   
+    } 
 
-    // Process each tracking point
+
+    std::vector<cv::Rect> rois;
+    for (const auto& point : trackingPoints) {
+        cv::Rect roi = calculateROI(inputImage, point, neighborhoodSize_);
+        rois.push_back(roi);
+    }
+
+    std::vector<cv::Rect> mergedROIs = mergeOverlappingROIs(rois, 0.05); // Overlap threshold of 50%
+
+    for (const auto& roi : mergedROIs) {
+        std::vector<cv::Point> roiDetectedPoints = applyAdaptiveThreshold(inputImage, roi);
+        detectedPoints.insert(detectedPoints.end(), roiDetectedPoints.begin(), roiDetectedPoints.end());
+    }
+
+/*     // Process each tracking point
     for (const auto& point : trackingPoints) {
         // Apply adaptive thresholding to the ROI around the tracking point
         //std::cout << "[UVDARLedDetectAdaptive]: PROCESSING TRACKING POINT: " << point << std::endl;
@@ -94,7 +108,7 @@ const std::vector<cv::Point>& standardPoints) {
                 detectedPoints.push_back(roiPoint); // Insert only the unique point
             }
         }
-    }
+    } */
 
     std::vector<cv::Point> final_detected_points = mergePoints(detectedPoints, standardPoints, point_similarity_threshold_);
     
@@ -120,7 +134,7 @@ const std::vector<cv::Point>& standardPoints) {
 //}
 
 /* applyAdaptiveThreshold //{ */
-std::vector<cv::Point> UVDARLedDetectAdaptive::applyAdaptiveThreshold(const cv::Mat& image, const cv::Point& point, int neighborhoodSize) {
+std::vector<cv::Point> UVDARLedDetectAdaptive::applyAdaptiveThreshold(const cv::Mat& inputImage, const cv::Rect& roi) {
 
     /**
      * 
@@ -135,7 +149,18 @@ std::vector<cv::Point> UVDARLedDetectAdaptive::applyAdaptiveThreshold(const cv::
      * roiDetectedPoints: The points detected within the region of interest
      */
 
+
     cv::Mat grayImage;
+    if (inputImage.channels() == 3) {
+        cv::cvtColor(inputImage(roi), grayImage, cv::COLOR_BGR2GRAY);
+    } else {
+        grayImage = inputImage(roi).clone();
+    }
+
+    int MAX_AREA = 5;
+
+
+   /*  cv::Mat grayImage;
     if (image.channels() == 3) {
         cv::cvtColor(image, grayImage, cv::COLOR_BGR2GRAY);
     } else {
@@ -146,7 +171,6 @@ std::vector<cv::Point> UVDARLedDetectAdaptive::applyAdaptiveThreshold(const cv::
     int y = std::max(0, point.y - neighborhoodSize);
     int width = std::min(neighborhoodSize * 2, image.cols - x);
     int height = std::min(neighborhoodSize * 2, image.rows - y);
-    int MAX_AREA = 5;
 
     cv::Rect roi(x, y, width, height); // Create a rectangle around the point
     //lastProcessedROIs_.push_back(roi); // Store the ROI for visualization
@@ -154,22 +178,21 @@ std::vector<cv::Point> UVDARLedDetectAdaptive::applyAdaptiveThreshold(const cv::
     cv::Mat roiImage = grayImage(roi); // Extract the ROI from the grayscale image
     //Copy the roiImage for comparison of threshold without blur
     cv::Mat roiImageCopy = roiImage.clone();
-    cv::Mat roiImageCopy2 = roiImage.clone();
-    //saveRoiImage(roiImage, point, roiIndex_++, 0, 0.0);
+    //saveRoiImage(roiImage, point, roiIndex_++, 0, 0.0); */
 
     //Apply Gaussian blur to the ROI
     cv::Mat blurred;
     double sigmaX = 6.0;
     double sigmaY = 6.0;
-    cv::GaussianBlur(roiImageCopy, blurred, cv::Size(0, 0), sigmaX, sigmaY);
+    cv::GaussianBlur(grayImage, blurred, cv::Size(0, 0), sigmaX, sigmaY);
 
     // Create unsharp mask by subtracting the blurred version from the original image
-    cv::Mat unsharpMask = roiImageCopy - blurred;
+    cv::Mat unsharpMask = grayImage - blurred;
 
     //saveRoiImage(unsharpMask, point, roiIndex_++, 0, 0.0);
     // Apply the unsharp mask to the original image to enhance edges
     cv::Mat enhancedImage;
-    cv::addWeighted(roiImageCopy, 0.25, unsharpMask, 1.75, 0, enhancedImage);
+    cv::addWeighted(grayImage, 0.25, unsharpMask, 1.75, 0, enhancedImage);
 
     //saveRoiImage(enhancedImage, point, roiIndex_++, 0, 0.0);
 
@@ -186,8 +209,6 @@ std::vector<cv::Point> UVDARLedDetectAdaptive::applyAdaptiveThreshold(const cv::
     }
     else{
         //std::cout << "[UVDARLedDetectAdaptive]: APPLYING KL DIVERGENCE" << std::endl;
-        //Apply Otsu's thresholding with the enhanced ROI
-        //int thresholdValue_= cv::threshold(enhancedImage, binaryRoi, 0, 255, cv::THRESH_BINARY | cv::THRESH_OTSU); // Apply Otsu's thresholding
         auto [thresholdValue, minKLDivergence] = findOptimalThresholdUsingKL(enhancedImage);
         //Using entropy
         //auto [thresholdValue, minKLDivergence] = findOptimalThresholdUsingEntropy(enhancedImage);
@@ -195,46 +216,6 @@ std::vector<cv::Point> UVDARLedDetectAdaptive::applyAdaptiveThreshold(const cv::
         minKLDivergence_ = minKLDivergence;
         cv::threshold(enhancedImage,binaryRoi, thresholdValue_, 255, cv::THRESH_BINARY);
     }
-    //Apply Otsu's thresholding with the enhanced ROI
-    //int thresholdValue_= cv::threshold(enhancedImage, binaryRoi, 0, 255, cv::THRESH_BINARY | cv::THRESH_OTSU); // Apply Otsu's thresholding
-
-
-    //auto [optimalThreshold, minKLDivergence] = findOptimalThresholdUsingKL(enhancedImage);
-    //cv::threshold(enhancedImage,binaryRoi, optimalThreshold, 255, cv::THRESH_BINARY);
-
-
-    //saveRoiImage(binaryRoi, point, roiIndex_++, thresholdValue, 0.0);
-
-
-    /*
-
-     //Apply Otsu's thresholding without blur
-    cv::Mat binaryRoiCopy_otsu;
-    double thresholdValue_no_blur=cv::threshold(roiImageCopy, binaryRoiCopy_otsu, 0, 255, cv::THRESH_BINARY | cv::THRESH_OTSU); // Apply Otsu's thresholding
-
-    //saveRoiImage(binaryRoi, point, roiIndex_++, thresholdValue, 0.0);
-    //saveRoiImage(binaryRoiCopy_otsu, point, roiIndex_++, thresholdValue_no_blur, 0.0);
-
-
-    cv::Mat binaryRoiCopy;
-    //Apply the optimal threshold to the enhanced ROI
-    auto [optimalThreshold, minKLDivergence] = findOptimalThresholdUsingKL(enhancedImage);
-    cv::threshold(enhancedImage,binaryRoiCopy, optimalThreshold, 255, cv::THRESH_BINARY);
-
-    cv::Mat binaryRoiCopy2;
-    //Apply the optimal threshold to the original ROI
-    auto [optimalThreshold_no_blur, minKLDivergence_no_blur] = findOptimalThresholdUsingKL(roiImageCopy2);
-    cv::threshold(roiImageCopy2,binaryRoiCopy2, optimalThreshold_no_blur, 255, cv::THRESH_BINARY);
-
-
-    //saveRoiImage(binaryRoiCopy, point, roiIndex_++, optimalThreshold, minKLDivergence);
-    //saveRoiImage(binaryRoiCopy2, point, roiIndex_++, optimalThreshold_no_blur, minKLDivergence_no_blur);
-
-
-    std::cout << "[UVDARLedDetectAdaptive]: THRESHOLD VALUE: " << thresholdValue << std::endl;
-    std::cout << "[UVDARLedDetectAdaptive]: OPTIMAL THRESHOLD VALUE: " << optimalThreshold << std::endl;
-    
-    */
    
     // Find contours in the binary ROI
     std::vector<std::vector<cv::Point>> contours;
@@ -243,7 +224,7 @@ std::vector<cv::Point> UVDARLedDetectAdaptive::applyAdaptiveThreshold(const cv::
     cv::Mat mask = cv::Mat::zeros(binaryRoi.size(), CV_8UC1);
 
     //Get the number of contours
-    //std::cout << "[UVDARLedDetectAdaptive]: NUMBER OF CONTOURS: " << contours.size() << std::endl;
+    std::cout << "[UVDARLedDetectAdaptive]: NUMBER OF CONTOURS: " << contours.size() << std::endl;
 
     if (contours.size() >= 4){
         //Return empty roiDetectedPoints
@@ -264,77 +245,9 @@ std::vector<cv::Point> UVDARLedDetectAdaptive::applyAdaptiveThreshold(const cv::
             //std::cout << "[UVDARLedDetectAdaptive]: OUT OF AREA: " << area << std::endl;
         }
     }
-    /*
-    //Print the size of contours
-    std::cout << "[UVDARLedDetectAdaptive]: CONTOURS SIZE: " << contours.size() << std::endl;
-    //Current neighborhood size
-    std::cout << "[UVDARLedDetectAdaptive]: CURRENT NEIGHBORHOOD SIZE: " << neighborhoodSize << std::endl;
-    // Adjust the neighborhood size based on the area of the contours
-    int new_size = adjustNeighborhoodSizeBasedOnArea(roiImage, contours, neighborhoodSize);
-    std::cout << "[UVDARLedDetectAdaptive]: NEW NEIGHBORHOOD SIZE: " << new_size << std::endl;
-    
-    //Construct new ROI with the new neighborhood size
-    cv::Rect new_roi(point.x - new_size, point.y - new_size, 2 * new_size, 2 * new_size);
-    cv::Mat new_roiImage = grayImage(new_roi); // Extract the ROI from the grayscale image
 
-    //Apply Gaussian blur to the new ROI
-    cv::Mat new_blurred;
-    double new_sigmaX = 6.0;
-    double new_sigmaY = 6.0;
-    cv::GaussianBlur(new_roiImage, new_blurred, cv::Size(0, 0), new_sigmaX, new_sigmaY);
-
-    // Create unsharp mask by subtracting the blurred version from the original image
-    cv::Mat new_unsharpMask = new_roiImage - new_blurred;
-
-    // Apply the unsharp mask to the original image to enhance edges
-    cv::Mat new_enhancedImage;
-    cv::addWeighted(new_roiImage, 0.25, new_unsharpMask, 1.75, 0, new_enhancedImage);
-
-    //saveRoiImage(new_enhancedImage, point, roiIndex_++, 0, 0.0);
-
-    cv::Mat new_binaryRoi;
-    //cv::adaptiveThreshold(new_roiImage, new_binaryRoi, 255, cv::ADAPTIVE_THRESH_GAUSSIAN_C, cv::THRESH_BINARY, 11, 2);
-    //Apply Otsu's thresholding with the enhanced ROI
-    double new_thresholdValue= cv::threshold(new_enhancedImage, new_binaryRoi, 0, 255, cv::THRESH_BINARY | cv::THRESH_OTSU); // Apply Otsu's thresholding
-
-    // Find contours in the binary ROI
-    std::vector<std::vector<cv::Point>> new_contours;
-    cv::findContours(new_binaryRoi, new_contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
-    // Create a mask to draw the filtered contours
-    cv::Mat new_mask = cv::Mat::zeros(new_binaryRoi.size(), CV_8UC1);
-
-    //Get the number of contours
-    //std::cout << "[UVDARLedDetectAdaptive]: NUMBER OF NEW CONTOURS: " << new_contours.size() << std::endl;
-
-    if (new_contours.size() > 3){
-        //Return empty roiDetectedPoints
-        std::vector<cv::Point> empty_roiDetectedPoints = {};
-        return empty_roiDetectedPoints;
-
-    }
-
-    for (const auto& new_contour : new_contours) {
-        // Calculate the area of the contour
-        double new_area = cv::contourArea(new_contour);
-        // Filter based on area
-        if (new_area < MAX_AREA) {
-            //std::cout << "[UVDARLedDetectAdaptive]: IN NEW AREA: " << new_area << std::endl;
-            // Draw the contour on the mask
-            cv::drawContours(new_mask, std::vector<std::vector<cv::Point>>{new_contour}, -1, cv::Scalar(255), cv::FILLED);
-        }else{
-            //std::cout << "[UVDARLedDetectAdaptive]: OUT OF NEW AREA: " << new_area << std::endl;
-        }
-    }
-
-
-    new_binaryRoi &= new_mask;
-
-    */
     // Apply the mask to the binary ROI
     binaryRoi &= mask;
-
-    // Detect points within the binary ROI
-    //std::vector<cv::Point> roiDetectedPoints = detectPointsFromRoi(new_binaryRoi, new_roi);
 
     // Detect points within this ROI
     std::vector<cv::Point> roiDetectedPoints = detectPointsFromRoi(binaryRoi, roi);
@@ -365,8 +278,6 @@ std::vector<cv::Point> UVDARLedDetectAdaptive::applyAdaptiveThreshold(const cv::
     }
     else{
     lastProcessedROIs_.push_back(roi); // Store the ROI for visualization
-    //lastProcessedROIs_.push_back(new_roi); // Store the ROI for visualization
-    //lastProcessedBinaryROIs_.push_back(new_binaryRoi); // Store the binary ROI (For debugging/visualization)
     // Store the binary ROI (For debugging/visualization)
     lastProcessedBinaryROIs_.push_back(binaryRoi);
     //saveRoiImage(binaryRoi, point, roiIndex_++, thresholdValue_, 1.0);
@@ -388,6 +299,49 @@ std::vector<cv::Point> UVDARLedDetectAdaptive::applyAdaptiveThreshold(const cv::
 
 }
 //}
+
+cv::Rect UVDARLedDetectAdaptive::calculateROI(const cv::Mat& image, const cv::Point& point, int neighborhoodSize) {
+    int x = std::max(0, point.x - neighborhoodSize);
+    int y = std::max(0, point.y - neighborhoodSize);
+    int width = std::min(neighborhoodSize * 2, image.cols - x);
+    int height = std::min(neighborhoodSize * 2, image.rows - y);
+    return cv::Rect(x, y, width, height);
+}
+
+std::vector<cv::Rect> UVDARLedDetectAdaptive::mergeOverlappingROIs(const std::vector<cv::Rect>& rois, double overlapThreshold) {
+    std::vector<cv::Rect> mergedROIs;
+    std::vector<bool> merged(rois.size(), false);
+
+    for (int i = 0; i < rois.size(); i++) {
+        if (merged[i]) continue;
+        cv::Rect currentROI = rois[i];
+        for (int j = i + 1; j < rois.size(); j++) {
+            if (merged[j]) continue;
+            if (isOverlapping(currentROI, rois[j], overlapThreshold)) {
+                //Print debug message
+                //std::cout << "[UVDARLedDetectAdaptive]: MERGING OVERLAPPING ROIS" << std::endl;
+                // Collect the corners of both rectangles
+                std::vector<cv::Point> corners;
+                corners.push_back(cv::Point(currentROI.x, currentROI.y));
+                corners.push_back(cv::Point(currentROI.x + currentROI.width, currentROI.y + currentROI.height));
+                corners.push_back(cv::Point(rois[j].x, rois[j].y));
+                corners.push_back(cv::Point(rois[j].x + rois[j].width, rois[j].y + rois[j].height));
+                // Calculate the bounding rectangle of these corners
+                currentROI = cv::boundingRect(corners);
+                merged[j] = true;
+            }
+        }
+        mergedROIs.push_back(currentROI);
+        merged[i] = true;
+    }
+    return mergedROIs;
+}
+
+bool UVDARLedDetectAdaptive::isOverlapping(const cv::Rect& roi1, const cv::Rect& roi2, double overlapThreshold) {
+    cv::Rect intersection = roi1 & roi2;
+    double iou = double(intersection.area()) / (roi1.area() + roi2.area() - intersection.area());
+    return iou > overlapThreshold;
+}
 
 
 /* adjustNeighborhoodSizeBasedOnArea //{ */
@@ -545,20 +499,23 @@ std::vector<cv::Point> UVDARLedDetectAdaptive::mergePoints(const std::vector<cv:
 
         double klDivergence = 0.0;
         double epsilon = 1e-10;  // Small value to avoid log(0)
-
-      /*   for (size_t i = 0; i < limit; ++i) {  // Only iterate up to the given 'limit'
+        for (size_t i = 0; i < overallHist.size(); ++i) {
+            // Make sure we only calculate where both distributions have positive values
             if (segmentHist[i] > 0 && overallHist[i] > 0) {
                 klDivergence += overallHist[i] * log(overallHist[i] / segmentHist[i] + epsilon);
             }
         }
-        */
+        return klDivergence;
+
+/*         double klDivergence = 0.0;
+        double epsilon = 1e-10;  // Small value to avoid log(0)
 
         for (size_t i = 0; i < limit && i < segmentHist.size() && i < overallHist.size(); ++i) {
             if (segmentHist[i] > 0 && overallHist[i] > 0) {
                 klDivergence += overallHist[i] * log((overallHist[i] + epsilon) / (segmentHist[i] + epsilon));
             }
         }
-        return klDivergence;
+        return klDivergence; */
   
 }
 
@@ -612,9 +569,6 @@ std::tuple<int, double> UVDARLedDetectAdaptive::findOptimalThresholdUsingKL(cons
     cv::normalize(hist, hist, 1, 0, cv::NORM_L1, -1, cv::Mat());
 
 
-    if (cv::sum(hist)[0] == 0) {
-        throw std::runtime_error("Histogram normalization failed.");
-    }
 
     double minKLDivergence = std::numeric_limits<double>::max();
     int optimalThreshold = 0;
@@ -644,12 +598,6 @@ std::tuple<int, double> UVDARLedDetectAdaptive::findOptimalThresholdUsingKL(cons
         for (auto& val : normalizedP_below) val /= sumBelow;
         for (auto& val : normalizedP_above) val /= sumAbove;
 
-
-        double sumCheck = std::accumulate(normalizedP_below.begin(), normalizedP_below.end(), 0.0);
-        assert(abs(sumCheck - 1.0) < epsilon);  // Ensures sum is close to 1
-
-        sumCheck = std::accumulate(normalizedP_above.begin(), normalizedP_above.end(), 0.0);
-        assert(abs(sumCheck - 1.0) < epsilon);  // Ensures sum is close to 1
 
         double klDivBelow = calculateKLDivergence(normalizedP_below, Q, t + 1);
         double klDivAbove = calculateKLDivergence(normalizedP_above, Q, histSize - t - 1);
@@ -682,10 +630,9 @@ std::tuple<int, double> UVDARLedDetectAdaptive::findOptimalThresholdUsingKL(cons
 
     }
     
-
     //Print the minKLDivergence and optimalThreshold
     //std::cout << "[UVDARLedDetectAdaptive]: MIN KL DIVERGENCE: " << minKLDivergence << std::endl;
-    // /std::cout << "[UVDARLedDetectAdaptive]: OPTIMAL THRESHOLD: " << optimalThreshold << std::endl;
+    //std::cout << "[UVDARLedDetectAdaptive]: OPTIMAL THRESHOLD: " << optimalThreshold << std::endl;
 
 
     return std::make_tuple(optimalThreshold, minKLDivergence);

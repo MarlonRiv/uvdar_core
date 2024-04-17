@@ -46,7 +46,12 @@ public:
     }
 
 private:
-    std::vector<cv::Point> applyAdaptiveThreshold(const cv::Mat& image, const cv::Point& point, int neighborhoodSize);
+    std::vector<cv::Point> applyAdaptiveThreshold(const cv::Mat& inputImage, const cv::Rect& roi);
+
+    cv::Rect calculateROI(const cv::Mat& image, const cv::Point& point, int neighborhoodSize);
+
+    std::vector<cv::Rect> mergeOverlappingROIs(const std::vector<cv::Rect>& rois, double overlapThreshold);
+    bool isOverlapping(const cv::Rect& roi1, const cv::Rect& roi2, double overlapThreshold);
 
     std::vector<cv::Point> detectPointsFromRoi(const cv::Mat& mask, const cv::Rect& roi);
 
