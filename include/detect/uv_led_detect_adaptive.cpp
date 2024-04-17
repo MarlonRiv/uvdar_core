@@ -80,7 +80,13 @@ const std::vector<cv::Point>& standardPoints) {
         rois.push_back(roi);
     }
 
+    //Print number of ROIs
+    std::cout << "[UVDARLedDetectAdaptive]: NUMBER OF ROIS: " << rois.size() << std::endl;
+
     std::vector<cv::Rect> mergedROIs = mergeOverlappingROIs(rois,inputImage.size(), 0.05); // Overlap threshold of 50%
+
+    //Print number of merged ROIs
+    std::cout << "[UVDARLedDetectAdaptive]: NUMBER OF MERGED ROIS: " << mergedROIs.size() << std::endl;
 
     for (const auto& roi : mergedROIs) {
         std::vector<cv::Point> roiDetectedPoints = applyAdaptiveThreshold(inputImage, roi);
@@ -156,7 +162,7 @@ std::vector<cv::Point> UVDARLedDetectAdaptive::applyAdaptiveThreshold(const cv::
         grayImage = inputImage(roi).clone();
     }
 
-    int MAX_AREA = 5;
+    int MAX_AREA = 50;
 
 
    /*  cv::Mat grayImage;
