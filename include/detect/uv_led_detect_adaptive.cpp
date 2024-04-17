@@ -224,7 +224,7 @@ std::vector<cv::Point> UVDARLedDetectAdaptive::applyAdaptiveThreshold(const cv::
     cv::Mat mask = cv::Mat::zeros(binaryRoi.size(), CV_8UC1);
 
     //Get the number of contours
-    std::cout << "[UVDARLedDetectAdaptive]: NUMBER OF CONTOURS: " << contours.size() << std::endl;
+    //std::cout << "[UVDARLedDetectAdaptive]: NUMBER OF CONTOURS: " << contours.size() << std::endl;
 
     if (contours.size() >= 4){
         //Return empty roiDetectedPoints
