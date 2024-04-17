@@ -584,10 +584,9 @@ private:
         //ROS_INFO_STREAM("[UVDARDetector]: Processing image with tracking points only.");
         processAdaptive(image, image_index, trackingPointsPerCamera[image_index]);
         
-       /*  cv::Mat visualization_image;
         cv::Mat white_background = cv::Mat::ones(image->image.size(), image->image.type()) * 255;
         uvda_[image_index]->generateVisualizationAdaptive(white_background,visualization_image,adaptive_detected_points_[image_index]);
-        publishVisualizationImage(visualization_image);  */
+        //publishVisualizationImage(visualization_image); 
       }
      
     }
@@ -661,15 +660,14 @@ private:
   /* VisualizationThread() //{ */
   void VisualizationThread([[maybe_unused]] const ros::TimerEvent& te) {
     if (initialized_){
-      generateVisualization(image_visualization_);
+      //generateVisualization(image_visualization_);
       if ((image_visualization_.cols != 0) && (image_visualization_.rows != 0)){
         if (_publish_visualization_){
-
           ROS_INFO_STREAM("[UVDARDetector]: Publishing visualization.");
-          pub_visualization_->publish("uvdar_detection_visualization", 0.01, image_visualization_, true);
+          pub_visualization_->publish("uvdar_detection_visualization", 0.01, visualization_image, true);
         }
         if (_gui_){
-          cv::imshow("ocv_uvdar_detection_" + _uav_name_, image_visualization_);
+          cv::imshow("ocv_uvdar_detection_" + _uav_name_, visualization_image);
           cv::waitKey(25);
         }
       }
@@ -806,6 +804,7 @@ private:
   ros::Time initial_delay_start_;
 
 
+  cv::Mat visualization_image;
 
   std::vector<ros::Timer> timer_process_tracking_;
 

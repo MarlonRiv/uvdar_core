@@ -80,7 +80,7 @@ const std::vector<cv::Point>& standardPoints) {
         rois.push_back(roi);
     }
 
-    std::vector<cv::Rect> mergedROIs = mergeOverlappingROIs(rois, 0.05); // Overlap threshold of 50%
+    std::vector<cv::Rect> mergedROIs = mergeOverlappingROIs(rois,inputImage.size(), 0.05); // Overlap threshold of 50%
 
     for (const auto& roi : mergedROIs) {
         std::vector<cv::Point> roiDetectedPoints = applyAdaptiveThreshold(inputImage, roi);
@@ -148,7 +148,6 @@ std::vector<cv::Point> UVDARLedDetectAdaptive::applyAdaptiveThreshold(const cv::
      * @returns:
      * roiDetectedPoints: The points detected within the region of interest
      */
-
 
     cv::Mat grayImage;
     if (inputImage.channels() == 3) {
@@ -300,6 +299,15 @@ std::vector<cv::Point> UVDARLedDetectAdaptive::applyAdaptiveThreshold(const cv::
 }
 //}
 
+cv::Rect UVDARLedDetectAdaptive::adjustROI(const cv::Rect& inputROI, const cv::Size& imageSize) {
+    int x = std::max(0, inputROI.x);
+    int y = std::max(0, inputROI.y);
+    int width = std::min(inputROI.width, imageSize.width - x);
+    int height = std::min(inputROI.height, imageSize.height - y);
+
+    return cv::Rect(x, y, width, height);
+}
+
 cv::Rect UVDARLedDetectAdaptive::calculateROI(const cv::Mat& image, const cv::Point& point, int neighborhoodSize) {
     int x = std::max(0, point.x - neighborhoodSize);
     int y = std::max(0, point.y - neighborhoodSize);
@@ -308,7 +316,7 @@ cv::Rect UVDARLedDetectAdaptive::calculateROI(const cv::Mat& image, const cv::Po
     return cv::Rect(x, y, width, height);
 }
 
-std::vector<cv::Rect> UVDARLedDetectAdaptive::mergeOverlappingROIs(const std::vector<cv::Rect>& rois, double overlapThreshold) {
+std::vector<cv::Rect> UVDARLedDetectAdaptive::mergeOverlappingROIs(const std::vector<cv::Rect>& rois, const cv::Size& imageSize, double overlapThreshold) {
     std::vector<cv::Rect> mergedROIs;
     std::vector<bool> merged(rois.size(), false);
 
@@ -331,6 +339,8 @@ std::vector<cv::Rect> UVDARLedDetectAdaptive::mergeOverlappingROIs(const std::ve
                 merged[j] = true;
             }
         }
+
+        currentROI = adjustROI(currentROI, imageSize);
         mergedROIs.push_back(currentROI);
         merged[i] = true;
     }

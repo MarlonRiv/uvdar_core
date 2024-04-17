@@ -228,7 +228,7 @@
       <param name="debug"		type="bool" value="$(arg debug)"/> 
       <!-- <param name="debug"		type="bool" value="true"/> --> 
       <param name="gui"             type="bool" value="false"/>
-      <param name="publish_visualization"             type="bool" value="false"/>
+      <param name="publish_visualization"             type="bool" value="true"/>
       <param name="justReport" type="bool" value="true"/>
       <param name="threshold" type="int" value="$(arg threshold)"/>
       <!-- Params for Marlon's Adaptive Binarization-->
