@@ -223,7 +223,7 @@ std::vector<cv::Point> UVDARLedDetectAdaptive::applyAdaptiveThreshold(const cv::
     cv::Mat mask = cv::Mat::zeros(binaryRoi.size(), CV_8UC1);
 
     //Get the number of contours
-    //std::cout << "[UVDARLedDetectAdaptive]: NUMBER OF CONTOURS: " << contours.size() << std::endl;
+    std::cout << "[UVDARLedDetectAdaptive]: NUMBER OF CONTOURS: " << contours.size() << std::endl;
 
     if (contours.size() >= 4){
         //Return empty roiDetectedPoints
@@ -237,11 +237,11 @@ std::vector<cv::Point> UVDARLedDetectAdaptive::applyAdaptiveThreshold(const cv::
         double area = cv::contourArea(contour);
         // Filter based on area
         if (area < MAX_AREA) {
-            //std::cout << "[UVDARLedDetectAdaptive]: IN AREA: " << area << std::endl;
+            std::cout << "[UVDARLedDetectAdaptive]: IN AREA: " << area << std::endl;
             // Draw the contour on the mask
             cv::drawContours(mask, std::vector<std::vector<cv::Point>>{contour}, -1, cv::Scalar(255), cv::FILLED);
         }else{
-            //std::cout << "[UVDARLedDetectAdaptive]: OUT OF AREA: " << area << std::endl;
+            std::cout << "[UVDARLedDetectAdaptive]: OUT OF AREA: " << area << std::endl;
         }
     }
 
@@ -250,10 +250,10 @@ std::vector<cv::Point> UVDARLedDetectAdaptive::applyAdaptiveThreshold(const cv::
 
     // Detect points within this ROI
     std::vector<cv::Point> roiDetectedPoints = detectPointsFromRoi(binaryRoi, roi);
-    //std::cout << "[UVDARLedDetectAdaptive]: ROI DETECTED POINTS: " << roiDetectedPoints.size() << std::endl;
+    std::cout << "[UVDARLedDetectAdaptive]: ROI DETECTED POINTS: " << roiDetectedPoints.size() << std::endl;
 
-    if (roiDetectedPoints.size() > 3){
-        //std::cout << "[UVDARLedDetectAdaptive]: NOISY ROI: " << roiDetectedPoints.size() << std::endl;
+    if (roiDetectedPoints.size() > 5){
+        std::cout << "[UVDARLedDetectAdaptive]: NOISY ROI: " << roiDetectedPoints.size() << std::endl;
         //saveRoiImage(binaryRoi, point, roiIndex_++, thresholdValue, -1.0);
 
         numberDetectedPoints.push_back(roiDetectedPoints.size());
@@ -810,5 +810,6 @@ ROIData UVDARLedDetectAdaptive::prepareAdaptiveDataForLogging() {
 
     return adaptiveData;
 }
+
 
 } // namespace uvdar

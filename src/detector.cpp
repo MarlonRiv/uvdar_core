@@ -407,7 +407,6 @@ private:
    * 
    * 
   */
-    ROS_INFO_STREAM("[UVDARDetector]: Processing image with standard thresholding.");
 
     if ( ! (uvdf_->processImage(
               image->image,
@@ -446,8 +445,6 @@ private:
   */
 
 
-    ROS_INFO_STREAM("[UVDARDetector]: Processing image with tracking points only.");
-
     if( ! (uvda_[image_index]->processImageAdaptive(
             image->image,
             trackingPoints,
@@ -470,7 +467,15 @@ private:
 
   /* publishAdaptive //{ */
   void publishAdaptive(const cv_bridge::CvImageConstPtr& image, int image_index, const std::vector<cv::Point>& adaptive_detected_points) {
-    ROS_INFO_STREAM("[UVDARDetector]: Publishing adaptive points.");
+
+    ROS_INFO_STREAM("[UVDARDetector]: Publishing adaptive points. In camera: " << image_index);
+
+    if (!adaptive_detected_points.empty()) {      
+      //Current camera
+      ROS_INFO_STREAM("[UVDARDetector]: Detected adaptive points in camera " << image_index << ": " << adaptive_detected_points.size());
+    } else {
+      ROS_INFO_STREAM("[UVDARDetector]: No detected adaptive points. In camera: " << image_index);
+    }
     uvdar_core::ImagePointsWithFloatStamped msg_detected;
     msg_detected.stamp = image->header.stamp;
     msg_detected.image_width = image->image.cols;
@@ -499,13 +504,13 @@ private:
 
   /* publishStandard //{ */
   void publishStandard(const cv_bridge::CvImageConstPtr& image, int image_index, const std::vector<cv::Point>& detected_points) {
-    ROS_INFO_STREAM("[UVDARDetector]: Publishing standard points.");
-    ROS_INFO_STREAM("[UVDARDetector]: This is the image index: " << image_index);
+
+    ROS_INFO_STREAM("[UVDARDetector]: Detected points in camera " << image_index << ": " << detected_points.size());
 
     if (!detected_points.empty()) {
       ROS_INFO_STREAM("[UVDARDetector]: Detected points: " << detected_points.size());
     } else {
-      ROS_INFO_STREAM("[UVDARDetector]: No detected points.");
+      ROS_INFO_STREAM("[UVDARDetector]: No detected points. In camera: " << image_index);
     }
 
   /*   // Print the points
@@ -579,9 +584,12 @@ private:
         adaptive_detected_points_[image_index].clear();
 
         //TODO: Check if its worth it, this to be able to detect new points that where not currently detected
+        ROS_INFO_STREAM("[UVDARDetector]: Processing image with standard thresholding. In camera: " << image_index);
+
         processStandard(image, image_index);
 
         //ROS_INFO_STREAM("[UVDARDetector]: Processing image with tracking points only.");
+        ROS_INFO_STREAM("[UVDARDetector]: Processing image with adaptive thresholding. In camera: " << image_index);
         processAdaptive(image, image_index, trackingPointsPerCamera[image_index]);
         
       }
@@ -643,6 +651,7 @@ private:
       }
 
       if (_adaptive_threshold_ && adaptive_detected_points_[image_index].size() > 0){
+
         publishAdaptive(image, image_index, adaptive_detected_points_[image_index]);
       }
       else{
