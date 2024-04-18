@@ -25,8 +25,8 @@ struct PointComparator {
 
 namespace uvdar {
 
-UVDARLedDetectAdaptive::UVDARLedDetectAdaptive(int neighborhoodSize, double point_similarity_threshold, std::string adaptive_method) : neighborhoodSize_(neighborhoodSize),
-point_similarity_threshold_(point_similarity_threshold), adaptive_method_(adaptive_method){}
+UVDARLedDetectAdaptive::UVDARLedDetectAdaptive(int neighborhoodSize, double point_similarity_threshold, std::string adaptive_method, bool adaptive_debug ) : neighborhoodSize_(neighborhoodSize),
+point_similarity_threshold_(point_similarity_threshold), adaptive_method_(adaptive_method), adaptive_debug_(adaptive_debug){}
 
 UVDARLedDetectAdaptive::~UVDARLedDetectAdaptive() {}
 
@@ -80,13 +80,17 @@ const std::vector<cv::Point>& standardPoints) {
         rois.push_back(roi);
     }
 
-    //Print number of ROIs
-    std::cout << "[UVDARLedDetectAdaptive]: NUMBER OF ROIS: " << rois.size() << std::endl;
+    if (adaptive_debug_){
+        //Print the size of the rois
+        std::cout << "[UVDARLedDetectAdaptive]: SIZE OF ROIS: " << rois.size() << std::endl;
+    }
 
     std::vector<cv::Rect> mergedROIs = mergeOverlappingROIs(rois,inputImage.size(), 0.05); // Overlap threshold of 50%
 
-    //Print number of merged ROIs
-    std::cout << "[UVDARLedDetectAdaptive]: NUMBER OF MERGED ROIS: " << mergedROIs.size() << std::endl;
+    if (adaptive_debug_){
+        //Print number of merged ROIs
+        std::cout << "[UVDARLedDetectAdaptive]: NUMBER OF MERGED ROIS: " << mergedROIs.size() << std::endl;
+    }
 
     for (const auto& roi : mergedROIs) {
         std::vector<cv::Point> roiDetectedPoints = applyAdaptiveThreshold(inputImage, roi);
@@ -228,8 +232,11 @@ std::vector<cv::Point> UVDARLedDetectAdaptive::applyAdaptiveThreshold(const cv::
     // Create a mask to draw the filtered contours
     cv::Mat mask = cv::Mat::zeros(binaryRoi.size(), CV_8UC1);
 
-    //Get the number of contours
+
+    if (adaptive_debug_){
+    //Print the contours size
     std::cout << "[UVDARLedDetectAdaptive]: NUMBER OF CONTOURS: " << contours.size() << std::endl;
+    }
 
     if (contours.size() >= 4){
         //Return empty roiDetectedPoints
@@ -243,11 +250,16 @@ std::vector<cv::Point> UVDARLedDetectAdaptive::applyAdaptiveThreshold(const cv::
         double area = cv::contourArea(contour);
         // Filter based on area
         if (area < MAX_AREA) {
-            std::cout << "[UVDARLedDetectAdaptive]: IN AREA: " << area << std::endl;
+
+            if (adaptive_debug_){
+                std::cout << "[UVDARLedDetectAdaptive]: IN AREA: " << area << std::endl;
+            }
             // Draw the contour on the mask
             cv::drawContours(mask, std::vector<std::vector<cv::Point>>{contour}, -1, cv::Scalar(255), cv::FILLED);
         }else{
-            std::cout << "[UVDARLedDetectAdaptive]: OUT OF AREA: " << area << std::endl;
+            if (adaptive_debug_){
+                std::cout << "[UVDARLedDetectAdaptive]: OUT OF AREA: " << area << std::endl;
+            }
         }
     }
 
@@ -256,10 +268,18 @@ std::vector<cv::Point> UVDARLedDetectAdaptive::applyAdaptiveThreshold(const cv::
 
     // Detect points within this ROI
     std::vector<cv::Point> roiDetectedPoints = detectPointsFromRoi(binaryRoi, roi);
-    std::cout << "[UVDARLedDetectAdaptive]: ROI DETECTED POINTS: " << roiDetectedPoints.size() << std::endl;
+
+    if (adaptive_debug_){
+        //Print the number of detected points
+        std::cout << "[UVDARLedDetectAdaptive]: ROI NUMBER OF DETECTED POINTS: " << roiDetectedPoints.size() << std::endl;
+    }
 
     if (roiDetectedPoints.size() > 5){
-        std::cout << "[UVDARLedDetectAdaptive]: NOISY ROI: " << roiDetectedPoints.size() << std::endl;
+
+        if (adaptive_debug_){
+            //Print the number of detected points
+            std::cout << "[UVDARLedDetectAdaptive]: NOISY ROI: " << roiDetectedPoints.size() << std::endl;
+        }
         //saveRoiImage(binaryRoi, point, roiIndex_++, thresholdValue, -1.0);
 
         numberDetectedPoints.push_back(roiDetectedPoints.size());
@@ -569,12 +589,6 @@ std::tuple<int, double> UVDARLedDetectAdaptive::findOptimalThresholdUsingKL(cons
     //std::cout << "[UVDARLedDetectAdaptive]: COUNT OF ZEROS: " << countZeros << std::endl;
     //std::cout << "[UVDARLedDetectAdaptive]: COUNT OF ONES: " << countOnes << std::endl;
 
-
-
-
-    if (roiImage.empty()) {
-        throw std::runtime_error("Input image is empty.");
-    }
     
     // Calculate the histogram of the ROI image
     int histSize = 256;

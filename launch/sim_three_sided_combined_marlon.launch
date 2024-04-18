@@ -130,7 +130,9 @@
       <param name="justReport" type="bool" value="true"/>
       <param name="threshold" type="int" value="$(arg threshold)"/>
       <param name="adaptive_threshold" type="bool" value="true"/>
-      <param name="adaptive_method" type="string" value="kl"/>
+      <param name="adaptive_method" type="string" value="otsu"/>
+      <param name="adaptive_debug" type="bool" value="true"/>
+
 
       <rosparam param="camera_topics"> ["camera_left", "camera_right", "camera_back"] </rosparam>
       <rosparam param="points_seen_topics"> ["points_seen_left", "points_seen_right", "points_seen_back"] </rosparam>
@@ -237,7 +239,7 @@
       
     
       <!-- <node name="uvdar_pose_calculator_node" pkg="uvdar_core" type="uvdar_pose_calculator_node" output="screen" launch-prefix="debug_roslaunch"> --> 
-    <node name="uvdar_pose_calculator_node" pkg="uvdar_core" type="uvdar_pose_calculator_node" output="screen" launch-prefix="bash -c 'sleep 20; $0 $@'">> 
+    <node name="uvdar_pose_calculator_node" pkg="uvdar_core" type="uvdar_pose_calculator_node" output="screen" launch-prefix="bash -c 'sleep 20; $0 $@'">>
         <!-- <node name="uvdar_pose_calculator_node" pkg="uvdar_core" type="uvdar_pose_calculator_node" launch-prefix="valgrind -/-tool=callgrind -/-callgrind-out-file=/home/viktor/callgrind.out -/-instr-atstart=no -/-collect-atstart=yes"> --> 
             <!-- <node name="uvdar_pose_calculator_node" pkg="uvdar_core" type="uvdar_pose_calculator_node" launch-prefix="valgrind -/-tool=callgrind -/-callgrind-out-file=/home/viktor/callgrind.out"> --> 
       <param name="uav_name" type = "string" value="$(arg uav_name)"/>

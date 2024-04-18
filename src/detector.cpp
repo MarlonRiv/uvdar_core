@@ -54,6 +54,8 @@ public:
     param_loader.loadParam("threshold", _threshold_, 200);
     param_loader.loadParam("adaptive_threshold",_adaptive_threshold_,bool(false));
     param_loader.loadParam("adaptive_method",_adaptive_method_,std::string("Otsu"));
+    param_loader.loadParam("adaptive_debug",_adaptive_debug_,bool(false));
+
 
     //Print adaptive threshold
     if(_adaptive_threshold_){
@@ -137,7 +139,8 @@ public:
         uvda_.push_back(std::make_unique<UVDARLedDetectAdaptive>(
               20,
               5.0,
-              _adaptive_method_
+              _adaptive_method_,
+              _adaptive_debug_
               ));
         if (!uvda_.back()){
           ROS_ERROR("[UVDARDetector]: Failed to initialize ADAPTIVE-based marker detection!");
@@ -801,6 +804,7 @@ private:
   int  _threshold_;
   bool _adaptive_threshold_;
   std::string _adaptive_method_;
+  bool _adaptive_debug_;
 
   double _initial_delay_ = 5.0;
 
