@@ -38,23 +38,23 @@
   <arg name="threshold" default="50"/>
   
   <!-- Blink processor settings: -->
-
   <arg name="blink_process_rate" default="10"/>
 
   <!--AMI values-->
+  <arg name="pub_tracking_stats" default="false"/>
+  <arg name="draw_predict_window_sec" default="0.0"/>
   <arg name="max_px_shift_y" default="3"/>
   <arg name="max_px_shift_x" default="3"/>
-  <arg name="max_zeros_consecutive" default="2"/>
-  <arg name="max_ones_consecutive" default="2"/>
-  <arg name="stored_seq_len_factor" default="1"/>
+  <arg name="max_zeros_consecutive" default="10"/>
+  <arg name="stored_seq_len_factor" default="20"/>
   <arg name="max_buffer_length" default="5000"/>
-  <arg name="poly_order" default="2"/>
+  <arg name="poly_order" default="4"/>
   <arg name="decay_factor" default="0.1"/>
   <arg name="confidence_probability" default="95.0"/>
   <arg name="allowed_BER_per_seq" default="0"/>
 
-  <arg name="use_4DHT" default="false"/>
   <!--4DHT values-->
+  <arg name="use_4DHT" default="false"/>
   <arg name="accumulator_length"         default="18"/>
   <arg name="pitch_steps"         default="16"/>
   <arg name="yaw_steps"         default="16"/>
@@ -90,19 +90,6 @@
   <arg name="id21" value="20"/>
 
   <arg name="sequence_file" default="$(find uvdar_core)/config/selected.txt"/>
-
-<!-- Params for Tim's BP_Processor-->
-  <arg name="max_px_shift_x" default="2"/>
-  <arg name="max_px_shift_y" default="2"/>
-  <arg name="max_zeros_consecutive" default="2"/>
-  <arg name="max_ones_consecutive" default="2"/>
-  <arg name="stored_seq_len_factor" default="15"/>
-  <arg name="poly_order" default="4"/>
-  <arg name="decay_factor" default="0.01"/>
-  <arg name="confidence_probability" default="95.0"/>
-  <arg name="frame_tolerance" default="5"/>
-  <arg name="allowed_BER_per_seq" default="0"/>
-
 
   <!-- Model settings: -->
 
@@ -235,10 +222,13 @@
 
       <param name="blink_process_rate"         type="int" value="$(arg blink_process_rate)"/>
 
+      <param name="pub_tracking_stats"      type="bool" value="$(arg pub_tracking_stats)"/>
+      <param name="draw_predict_window_sec"  type="double" value="$(arg draw_predict_window_sec)"/>
+      <param name="use_4DHT"             type="bool" value="$(arg use_4DHT)"/>
+
       <param name="max_px_shift_x"          type="int"    value="$(arg max_px_shift_x)"/>
       <param name="max_px_shift_y"          type="int"    value="$(arg max_px_shift_y)"/>
       <param name="max_zeros_consecutive"   type="int"    value="$(arg max_zeros_consecutive)"/>
-      <param name="max_ones_consecutive"    type="int"    value="$(arg max_ones_consecutive)"/>
       <param name="stored_seq_len_factor"   type="int"    value="$(arg stored_seq_len_factor)"/>  
       <param name="max_buffer_length"       type="int"    value="$(arg max_buffer_length)"/>  
       <param name="poly_order"              type="int"    value="$(arg poly_order)"/>
@@ -256,6 +246,7 @@
       <rosparam param="points_seen_topics"> ["points_seen_left", "points_seen_right", "points_seen_back"] </rosparam>
       <rosparam param="blinkers_seen_topics"> ["blinkers_seen_left", "blinkers_seen_right", "blinkers_seen_back"] </rosparam>
       <rosparam param="estimated_framerate_topics"> ["estimated_framerate_left", "estimated_framerate_right", "estimated_framerate_back"] </rosparam>
+      
       <rosparam param="ami_logging_topics"> ["ami_logging_left", "ami_logging_right", "ami_logging_back"] </rosparam>
       <rosparam param="ami_all_seq_info_topics"> ["ami_all_seq_info_left", "ami_all_seq_info_right", "ami_all_seq_info_back"] </rosparam>
 
