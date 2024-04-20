@@ -49,7 +49,7 @@ input=(
 '
   'AutoStart' 'waitForHw; roslaunch mrs_uav_autostart automatic_start.launch
 '
-  'uvdar_observer' 'waitForRos; roslaunch uvdar_core rw_three_sided_marlon.launch
+  'uvdar_observer' 'waitForRos; roslaunch uvdar_core rw_three_sided_marlon_v2.launch
 '
   'uvdar_filter' 'waitForRos; roslaunch uvdar_core uvdar_kalman.launch output_frame:='"$UAV_NAME"'/stable_origin
 '
