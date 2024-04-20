@@ -53,7 +53,7 @@ input=(
 '
   'load_sequence' 'waitForRos; history -s  rosservice call /'"$UAV_NAME"'/uvdar_led_manager_node/select_sequences [0,1,2,3]; history -s  rosservice call /'"$UAV_NAME"'/uvdar_led_manager_node/load_sequences;
 '
-  'uav_waypoint_flier' 'export '"$UAV_NAME"'; waitForControl; roslaunch example_waypoint_flier example_waypoint_flier.launch; history -s rosservice call /'"$UAV_NAME"'/example_waypoint_flier/fly_to_first_waypoint; export '"$UAV_NAME"'; history -s rosservice call /'"$UAV_NAME"'/example_waypoint_flier/start_waypoints_following;export '"$UAV_NAME"'; history -s rosservice call /'"$UAV_NAME"'/example_waypoint_flier/stop_waypoints_following;
+  'Trajectory' 'history -s rosservice call /'"$UAV_NAME"'/control_manager/stop_trajectory_tracking; rosservice call /'"$UAV_NAME"'/control_manager/goto_trajectory_start; history -s roslaunch uvdar_core load_trajectory.launch file:="trajectory_tx.txt";
 '
 # do NOT modify the command list below
   'EstimDiag' 'waitForHw; rostopic echo /'"$UAV_NAME"'/estimation_manager/diagnostics

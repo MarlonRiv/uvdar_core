@@ -79,12 +79,13 @@ windows:
         - 'export UAV_NAME=uav2; history -s rosservice call /$UAV_NAME/example_waypoint_flier/start_waypoints_following'
         - 'export UAV_NAME=uav2; history -s rosservice call /$UAV_NAME/example_waypoint_flier/stop_waypoints_following'
   
- #- trajectories:
-     #layout: tiled
-   # panes:
-   #     - export UAV_NAME=uav1; history -s rosservice call /'"$UAV_NAME"'/control_manager/start_trajectory_tracking; history -s rosservice call /'"$UAV_NAME"'/control_manager/goto_trajectory_start; history -s roslaunch uvdar_core load_trajectory.launch file:="tx1/line.txt" loop:=true
-   #    - export UAV_NAME=uav1; waitForControl; sleep 15;  ~/catkin_ws/src/uvdar_core/scripts/trajectory_generation.py; history -s rosservice call /'"$UAV_NAME"'/control_manager/goto_trajectory_start  
-        # - export UAV_NAME=uav3; history -s rosservice call /'"$UAV_NAME"'/control_manager/start_trajectory_tracking; history -s rosservice call /'"$UAV_NAME"'/control_manager/goto_trajectory_start; history -s roslaunch uvdar_core load_trajectory.launch file:="two_tx/tx2_fly_by.txt" loop:=true
+  - trajectories:
+      layout: tiled
+      panes:
+        - export UAV_NAME=uav1; history -s rosservice call /'"$UAV_NAME"'/control_manager/start_trajectory_tracking; history -s rosservice call /'"$UAV_NAME"'/control_manager/goto_trajectory_start; history -s roslaunch uvdar_core load_trajectory.launch file:="trajectory_rx.txt"
+        - export UAV_NAME=uav2; history -s rosservice call /'"$UAV_NAME"'/control_manager/start_trajectory_tracking; history -s rosservice call /'"$UAV_NAME"'/control_manager/goto_trajectory_start; history -s roslaunch uvdar_core load_trajectory.launch file:="trajectory_tx.txt"
+
+        #- export UAV_NAME=uav3; history -s rosservice call /'"$UAV_NAME"'/control_manager/start_trajectory_tracking; history -s rosservice call /'"$UAV_NAME"'/control_manager/goto_trajectory_start; history -s roslaunch uvdar_core load_trajectory.launch file:="two_tx/tx2_fly_by.txt" loop:=true
   - rviz:
       layout: even-vertical
       panes:
