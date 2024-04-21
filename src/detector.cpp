@@ -672,12 +672,18 @@ private:
   /* VisualizationThread() //{ */
   void VisualizationThread([[maybe_unused]] const ros::TimerEvent& te) {
     if (initialized_){
-      //generateVisualization(image_visualization_);
+
+        if(_adaptive_threshold_){
         int image_index = 0;
         cv::Mat visualization_image;
         cv::Mat white_background = cv::Mat::ones(images_current_[image_index].size(),images_current_[image_index].type()) * 255;
         uvda_[image_index]->generateVisualizationAdaptive(white_background,visualization_image,adaptive_detected_points_[image_index]);
         //publishVisualizationImage(visualization_image); 
+        }
+        else{
+           generateVisualization(image_visualization_);
+        }
+        
       if ((visualization_image.cols != 0) && (visualization_image.rows != 0)){
         if (_publish_visualization_){
           ROS_INFO_STREAM("[UVDARDetector]: Publishing visualization.");
