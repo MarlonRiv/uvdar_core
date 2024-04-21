@@ -678,10 +678,8 @@ private:
         cv::Mat white_background = cv::Mat::ones(images_current_[image_index].size(),images_current_[image_index].type()) * 255;
         uvda_[image_index]->generateVisualizationAdaptive(white_background,visualization_image,adaptive_detected_points_[image_index]);
         //publishVisualizationImage(visualization_image); 
-        }
-        else{
-           generateVisualization(image_visualization_);
-        }
+
+      //generateVisualization(image_visualization_);
         
       if ((visualization_image.cols != 0) && (visualization_image.rows != 0)){
         if (_publish_visualization_){
