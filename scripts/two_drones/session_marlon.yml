@@ -82,8 +82,8 @@ windows:
   - trajectories:
       layout: tiled
       panes:
-        - export UAV_NAME=uav1; history -s rosservice call /'"$UAV_NAME"'/control_manager/start_trajectory_tracking; history -s rosservice call /'"$UAV_NAME"'/control_manager/goto_trajectory_start; history -s roslaunch uvdar_core load_trajectory.launch file:="trajectory_rx.txt"
-        - export UAV_NAME=uav2; history -s rosservice call /'"$UAV_NAME"'/control_manager/start_trajectory_tracking; history -s rosservice call /'"$UAV_NAME"'/control_manager/goto_trajectory_start; history -s roslaunch uvdar_core load_trajectory.launch file:="trajectory_tx_h0.3.txt"
+        - export UAV_NAME=uav1; history -s rosservice call /'"$UAV_NAME"'/control_manager/start_trajectory_tracking; history -s rosservice call /'"$UAV_NAME"'/control_manager/goto_trajectory_start; history -s roslaunch uvdar_core load_trajectory.launch file:="trajectory_rx_8m.txt"
+        - export UAV_NAME=uav2; history -s rosservice call /'"$UAV_NAME"'/control_manager/start_trajectory_tracking; history -s rosservice call /'"$UAV_NAME"'/control_manager/goto_trajectory_start; history -s roslaunch uvdar_core load_trajectory.launch file:="trajectory_tx_2m.txt"
 
         #- export UAV_NAME=uav3; history -s rosservice call /'"$UAV_NAME"'/control_manager/start_trajectory_tracking; history -s rosservice call /'"$UAV_NAME"'/control_manager/goto_trajectory_start; history -s roslaunch uvdar_core load_trajectory.launch file:="two_tx/tx2_fly_by.txt" loop:=true
   - rviz:

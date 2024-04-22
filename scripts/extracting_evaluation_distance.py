@@ -7,16 +7,18 @@ import os
 #bag_path = os.path.expanduser('~/Desktop/MRS_Master_Project/rosbags/simulation/test_standard_topics_3.bag')
 
 
-primary_bag_path = os.path.expanduser('~/bag_files/marlon_experiments_temesvar/uav38_kl_first/uav38_kl_first.bag')  
-secondary_bag_path = os.path.expanduser('~/bag_files/marlon_experiments_temesvar/uav39_kl_first/uav39_kl_first.bag') 
+primary_bag_path = os.path.expanduser('~/bag_files/marlon_experiments_temesvar/day2/day2/otsu_exp2/otsu_exp2.bag')  
+secondary_bag_path = os.path.expanduser('~/bag_files/marlon_experiments_temesvar/day2/day2/otsu_exp2/otsu_exp.bag') 
 
 
-output_csv = os.path.expanduser('~/Desktop/MRS_Master_Project/rosbags/rw/raw_csv/kl_exp1.csv')
+output_csv = os.path.expanduser('~/Desktop/MRS_Master_Project/rosbags/rw/raw_csv/otsu_exp2_test.csv')
 
 distance_y_list = []
+
+"""
 with rosbag.Bag(secondary_bag_path, 'r') as bag:
     for topic, msg, t in bag.read_messages(topics=['/uav39/control_manager/control_reference']):
-        distance_y_list.append(msg.pose.pose.position.y)
+        distance_y_list.append(msg.pose.pose.position.y) """
 
 
 #Print size of distance_y_list

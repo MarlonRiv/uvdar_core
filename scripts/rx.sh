@@ -53,7 +53,7 @@ input=(
 '
   'uvdar_filter' 'waitForRos; roslaunch uvdar_core uvdar_kalman.launch output_frame:='"$UAV_NAME"'/stable_origin
 '
-  'Trajectory' 'history -s rosservice call /'"$UAV_NAME"'/control_manager/stop_trajectory_tracking; rosservice call /'"$UAV_NAME"'/control_manager/start_trajectory_tracking; rosservice call /'"$UAV_NAME"'/control_manager/goto_trajectory_start; history -s roslaunch uvdar_core load_trajectory.launch file:="trajectory_rx.txt";
+  'Trajectory' 'history -s rosservice call /'"$UAV_NAME"'/control_manager/stop_trajectory_tracking; history -s rosservice call /'"$UAV_NAME"'/control_manager/start_trajectory_tracking; history -s rosservice call /'"$UAV_NAME"'/control_manager/goto_trajectory_start; history -s roslaunch uvdar_core load_trajectory.launch file:="trajectory_rx.txt";
 '
   'record' 'waitForRos; history -s rosbag record -O ~/rosbags/marlon/exp1/test.bag /'"$UAV_NAME"'/uvdar/adaptive_logging_back /'"$UAV_NAME"'/uvdar/adaptive_logging_left /uav1/uvdar/adaptive_logging_right /'"$UAV_NAME"'/uvdar/blinkers_seen_back /'"$UAV_NAME"'/uvdar/blinkers_seen_left /'"$UAV_NAME"'/uvdar/blinkers_seen_right /'"$UAV_NAME"'/control_manager/control_reference --duration=30s;
 '
