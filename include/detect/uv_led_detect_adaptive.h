@@ -4,6 +4,7 @@
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
+
 #include <vector>
 #include <filesystem> 
 #include <cmath>
@@ -69,8 +70,9 @@ private:
     double calculateKLDivergence2(const cv::Mat& hist, const std::vector<double>& Q, int start, int end);
 
     std::tuple<int, double> findOptimalThresholdUsingKL(const cv::Mat& roiImage);
-    std::tuple<int, double> findOptimalThresholdUsingEntropy(const cv::Mat& roiImage); 
+    std::tuple<int, double> findOptimalThresholdUsingEntropy(const cv::Mat& roiImage);
 
+    cv::Mat plotHistogram(const cv::Mat& image);
     void saveRoiImage(const cv::Mat& binaryRoi, const cv::Point& center, int index, int thresholdValue, double klDivergence);
 
     int neighborhoodSize_;
@@ -92,6 +94,8 @@ private:
     std::vector<int> thresholdValue;
     std::vector<float> klDivergence;
     std::vector<int> validRoi;
+    int index = 0;
+
 
 };
 

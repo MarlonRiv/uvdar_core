@@ -15,14 +15,14 @@ points_messages = []
 omta_messages = []
 
 # Path to your ROS bag and output CSV file
-bag_path = os.path.expanduser('~/Desktop/MRS_Master_Project/rosbags/same_power_18m_topics.bag')
-output_csv_path = os.path.expanduser('~/Desktop/MRS_Master_Project/Experiments_data/same_power_7m.csv')
+bag_path = os.path.expanduser('~/Desktop/MRS_Master_Project/experiments/diff_power_7m_check.bag')
+output_csv_path = os.path.expanduser('~/Desktop/MRS_Master_Project/experiments/diff_power_7m_0516.csv')
 
 
 # Directory to save images
-image_output_dir = os.path.expanduser('~/Desktop/MRS_Master_Project/Experiments_data/images/same_power_18')
+""" image_output_dir = os.path.expanduser('~/Desktop/MRS_Master_Project/Experiments_data/images/same_power_18')
 if not os.path.exists(image_output_dir):
-    os.makedirs(image_output_dir)
+    os.makedirs(image_output_dir) """
 
 # Read the bag file and store image and points messages in separate lists
 with rosbag.Bag(bag_path, 'r') as bag:
@@ -62,8 +62,8 @@ for pts_timestamp, points_msg in points_messages:
         try:
             cv_image = bridge.imgmsg_to_cv2(corresponding_image_msg, "mono8")
             # Save the image
-            image_filename = f"{image_output_dir}/same_power_18{pts_timestamp}.png"
-            cv2.imwrite(image_filename, cv_image)
+            #image_filename = f"{image_output_dir}/same_power_18{pts_timestamp}.png"
+            #cv2.imwrite(image_filename, cv_image)
 
             for point in points_msg.points:
                 # Extract the pixel value at the point's x, y coordinates

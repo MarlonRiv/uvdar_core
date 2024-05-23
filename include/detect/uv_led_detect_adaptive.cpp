@@ -3,6 +3,7 @@
 #include <set>
 #include <filesystem>  // C++17 and above
 #include <opencv2/imgcodecs.hpp>
+
 #include <cmath>
 #include <numeric>
 #include <iomanip> // Include for std::fixed and std::setprecision
@@ -169,6 +170,10 @@ std::vector<cv::Point> UVDARLedDetectAdaptive::applyAdaptiveThreshold(const cv::
     int MAX_AREA = 50;
 
 
+    // Compute and plot histograms
+    cv::Mat histOriginal = plotHistogram(grayImage);
+
+
    /*  cv::Mat grayImage;
     if (image.channels() == 3) {
         cv::cvtColor(image, grayImage, cv::COLOR_BGR2GRAY);
@@ -203,18 +208,34 @@ std::vector<cv::Point> UVDARLedDetectAdaptive::applyAdaptiveThreshold(const cv::
     cv::Mat enhancedImage;
     cv::addWeighted(grayImage, 0.25, unsharpMask, 1.75, 0, enhancedImage);
 
-    //saveRoiImage(enhancedImage, point, roiIndex_++, 0, 0.0);
+
+    cv::Mat histEnhanced = plotHistogram(enhancedImage);
+
+    // Specify the output directory
+    std::string outputDir = "/home/rivermar/Desktop/MRS_Master_Project/roi_images";
+
+    // Ensure the output directory exists
+    fs::create_directories(outputDir);
+
+
+
+    //saveRoiImage(histOriginal, 0, roiIndex_++, 0, 0.0);
+    //saveRoiImage(histEnhanced, 0, roiIndex_++, 0, 0.0);
 
     cv::Mat binaryRoi;
     //cv::adaptiveThreshold(roiImage, binaryRoi, 255, cv::ADAPTIVE_THRESH_GAUSSIAN_C, cv::THRESH_BINARY, 11, 2);
 
     //Print the adaptive method
     //std::cout << "[UVDARLedDetectAdaptive]: ADAPTIVE METHOD: " << adaptive_method_ << std::endl;
-
+    cv::Mat binaryRoiOriginal;
     if( adaptive_method_ == "Otsu" || adaptive_method_ == "otsu"){
         //Apply Otsu's thresholding with the enhanced ROI
         int thresholdValue= cv::threshold(enhancedImage, binaryRoi, 0, 255, cv::THRESH_BINARY | cv::THRESH_OTSU); // Apply Otsu's thresholding
         thresholdValue_ = thresholdValue;
+
+        //Apply Otsu's thresholding with the original ROI
+       
+        int thresholdValueOriginal = cv::threshold(grayImage, binaryRoiOriginal, 0, 255, cv::THRESH_BINARY | cv::THRESH_OTSU); // Apply Otsu's thresholding
     }
     else{
         //std::cout << "[UVDARLedDetectAdaptive]: APPLYING KL DIVERGENCE" << std::endl;
@@ -225,6 +246,25 @@ std::vector<cv::Point> UVDARLedDetectAdaptive::applyAdaptiveThreshold(const cv::
         minKLDivergence_ = minKLDivergence;
         cv::threshold(enhancedImage,binaryRoi, thresholdValue_, 255, cv::THRESH_BINARY);
     }
+
+
+    //Save the original and enhanced images
+    cv::imwrite(outputDir + "/im_" + std::to_string(index) + ".png", grayImage);
+    index++;
+    // Save the histograms adding an index for each histogram
+    cv::imwrite(outputDir + "/im_" + std::to_string(index) + ".png", histOriginal);
+    index++;
+    //Save the binary ROI using the original image
+    cv::imwrite(outputDir + "/im_" + std::to_string(index) + ".png", binaryRoiOriginal);
+    index++;
+    //Save the enhanced image
+    cv::imwrite(outputDir + "/im_" + std::to_string(index) + ".png", enhancedImage);
+    index++;
+    cv::imwrite(outputDir + "/im_" + std::to_string(index) + ".png", histEnhanced);
+    index++;
+    //Save the binary ROI
+    cv::imwrite(outputDir + "/im_" + std::to_string(index) + ".png", binaryRoi);
+    index++;
    
     // Find contours in the binary ROI
     std::vector<std::vector<cv::Point>> contours;
@@ -772,6 +812,46 @@ void UVDARLedDetectAdaptive::generateVisualizationAdaptive(const cv::Mat& inputI
 
 }
 //}
+
+
+cv::Mat UVDARLedDetectAdaptive::plotHistogram(const cv::Mat& image) {
+    // Compute the histogram
+    int histSize = 256;
+    float range[] = { 0, 256 };
+    const float* histRange = { range };
+    cv::Mat hist;
+    cv::calcHist(&image, 1, 0, cv::Mat(), hist, 1, &histSize, &histRange, true, false);
+
+     
+
+     // Apply logarithmic scaling to the histogram values
+    hist += 1; // Avoid log(0)
+    cv::log(hist, hist);
+
+    // Create an image to display the histogram
+    int hist_w = 512; int hist_h = 400;
+    int bin_w = std::round((double)hist_w / histSize);
+    cv::Mat histImage(hist_h, hist_w, CV_8UC1, cv::Scalar(0));
+
+
+    // Find the maximum value of the histogram for scaling
+    double maxVal;
+    cv::minMaxLoc(hist, 0, &maxVal);
+
+    // Draw the histogram
+    for (int i = 0; i < histSize; i++) {
+        int binVal = std::round(hist.at<float>(i) * hist_h / maxVal);
+        if (binVal > hist_h) binVal = hist_h; // Cap the bin value to fit within the image height
+        cv::line(histImage,
+                 cv::Point(bin_w * i, hist_h),
+                 cv::Point(bin_w * i, hist_h - binVal),
+                 cv::Scalar(255), 2, 8, 0);
+    }
+
+    return histImage;
+
+   
+}
 
 /* saveRoiImage //{ */
 

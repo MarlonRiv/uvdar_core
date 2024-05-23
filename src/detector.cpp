@@ -584,7 +584,7 @@ private:
         images_current_[image_index] = image->image;
         sun_points_[image_index].clear();
         detected_points_[image_index].clear();
-        adaptive_detected_points_[image_index].clear();
+        adaptive_detected_points_[image_index].clear(); 
 
         //TODO: Check if its worth it, this to be able to detect new points that where not currently detected
         ROS_INFO_STREAM("[UVDARDetector]: Processing image with standard thresholding. In camera: " << image_index);

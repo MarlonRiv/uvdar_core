@@ -1,7 +1,7 @@
 name: simulation
 root: ./
 startup_window: launch
-pre_window: UAV_NAME=uav38
+pre_window: UAV_NAME=uav7
 windows:
   - core:
       layout: even-vertical
@@ -10,7 +10,7 @@ windows:
   - launch:
       layout: even-vertical
       panes:
-        - waitForRos; roslaunch uvdar_core rosbag.launch uav_name:=uav38 use_4DHT:=false debug:=false
+        - waitForRos; roslaunch uvdar_core rosbag.launch uav_name:=uav7 use_4DHT:=false debug:=false
   # - kf:
       # layout: even-vertical
       # panes:
@@ -19,7 +19,7 @@ windows:
   - rqtviz:
       layout: even-vertical
       panes:
-        #- waitForRos; sleep 3; rosbag record -O ~/Desktop/MRS_Master_Project/rosbags/exposure_5000_topics.bag /uav7/uvdar_bluefox/left/image_raw /uav7/uvdar/points_seen_left /uav7/uvdar/blinkers_seen_back /uav7/uvdar/omta_all_seq_info_back 
+        - waitForRos; sleep 3; rosbag record -O ~/Desktop/MRS_Master_Project/rosbags/good_sequence/diff_power_18m_th150_topics.bag /uav7/uvdar_bluefox/left/image_raw /uav7/uvdar/points_seen_left /uav7/uvdar/blinkers_seen_back /uav7/uvdar/ami_all_seq_info_back 
         #- rosbag record -O rosbags/first/omta_38.bag -e "(.*)_camp"
         # - rosbag record -O rosbags/first/omta_39.bag -e "(.*)_camp"
         # - rosbag record -O rosbags/first/4dht_38.bag -e "(.*)_camp"
@@ -36,13 +36,13 @@ windows:
         # - waitForRos; sleep 3; rosbag play --clock ~/experiments/20_04/two_tx/two_tx/rx/occlusion_1/rx.bag
         # - waitForRos; sleep 3; rosbag play --clock ~/experiments/20_04/two_tx/two_tx/rx/occlusion_2/rx.bag
         # - waitForRos; rosbag play --clock ~/experiments/20_04/tumult/tumult/rx/rx.bag
-        - waitForRos; sleep 3; rosbag play --clock ~/Desktop/MRS_Master_Project/rosbags/marlon/filtered_image_sun_temesvar_court.bag
+        - waitForRos; sleep 3; rosbag play --clock ~/Desktop/MRS_Master_Project/experiments/diff_power_18m_0615.bag
         # - waitForRos; sleep 3; rosbag play --clock ~/experiments/19_04/demo_first/rx1/all_three/rx1.bag
 
   - topics:
       layout: even-vertical
       panes:
-        - waitForRos; sleep 3; rostopic echo /uav38/uvdar/adaptive_logging_back
+        - waitForRos; sleep 3; rostopic echo /uav7/uvdar/ami_all_seq_info_back
 
  # - waitForCompile; cd ~/uvdar_rosbag/tracking/uav7/22_2021_04_27_09_11_19_L12/ ; rosbag play --clock -s 30 _2021-04-27-09-11-56.bag
   # - trajectory:

@@ -15,11 +15,11 @@ sequence_counter = 0  # Counter for sequence index
 
 
 
-bag_path = os.path.expanduser('~/Desktop/MRS_Master_Project/rosbags/diff_power_5m_topics.bag')
-output_csv_path = os.path.expanduser('~/Desktop/MRS_Master_Project/Experiments_data/diff_power_15m_check.csv')
+bag_path = os.path.expanduser('~/Desktop/MRS_Master_Project/rosbags/good_sequence/diff_power_18m_th150_topics.bag')
+output_csv_path = os.path.expanduser('~/Desktop/MRS_Master_Project/experiments/good_sequence/diff_power_18m_th150.csv')
 
 # Directory to save images
-image_output_dir = os.path.expanduser('~/Desktop/MRS_Master_Project/Experiments_data/images/diff_power_5_clean')
+#image_output_dir = os.path.expanduser('~/Desktop/MRS_Master_Project/Experiments_data/images/diff_power_5_clean')
 
 
 # Storage for image and omta messages
@@ -32,14 +32,14 @@ unique_points = set()
 with rosbag.Bag(bag_path, 'r') as bag:
     last_timestamp = None
     
-    for topic, msg, t in bag.read_messages(topics=['/uav7/uvdar_bluefox/left/image_raw', '/uav7/uvdar/omta_all_seq_info_back']):
+    for topic, msg, t in bag.read_messages(topics=['/uav7/uvdar_bluefox/left/image_raw', '/uav7/uvdar/ami_all_seq_info_back']):
         
         #Take only the first 5000 messages
-        if len(image_messages) > 10 and len(omta_messages) > 10:
-            break
+        """ if len(image_messages) > 10 and len(omta_messages) > 10:
+            break """
         if topic == '/uav7/uvdar_bluefox/left/image_raw':
             image_messages.append((t.to_nsec(), msg))
-        elif topic == '/uav7/uvdar/omta_all_seq_info_back':
+        elif topic == '/uav7/uvdar/ami_all_seq_info_back':
             omta_messages.append((t.to_nsec(), msg))
 
 # Sort messages by their timestamps
@@ -199,13 +199,13 @@ for omta_timestamp, omta_msg in omta_messages:
                 try:
                     cv_image = bridge.imgmsg_to_cv2(corresponding_image_msg, "mono8")
 
-                    image_filename = f"{image_output_dir}/diff_power_5{omta_timestamp}.png"
+                    """     image_filename = f"{image_output_dir}/diff_power_5{omta_timestamp}.png"
                     #movement = annotate_and_save_image(cv_image, omta_msg.sequences, image_filename,frame_timestamp,unique_points)
                      # Save the image
                     movement = False
                     cv2.imwrite(image_filename, cv_image)
                     if movement:
-                       continue
+                       continue """
                 
                     # Assuming the image is valid and the point is within the image bounds
                     point = seq_point.point
@@ -236,7 +236,7 @@ for omta_timestamp, omta_msg in omta_messages:
 print(f"Number of extracted data points: {len(extracted_data)}")
 
 # Release the video writer
-"""
+
 
 # Write the extracted data to a CSV file
 with open(output_csv_path, 'w', newline='') as csvfile:
@@ -249,4 +249,3 @@ with open(output_csv_path, 'w', newline='') as csvfile:
 
 print(f"Data extraction complete. CSV file created at {output_csv_path}")
 
-"""
