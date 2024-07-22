@@ -636,7 +636,7 @@ private:
         if(_adaptive_threshold_){
         int image_index = 0;
         cv::Mat white_background = cv::Mat::ones(images_current_[image_index].size(),images_current_[image_index].type()) * 255;
-        uvda_[image_index]->generateVisualizationAdaptive(images_current_[image_index],visualization_image,adaptive_detected_points_[image_index]);
+        uvda_[image_index]->generateVisualizationAdaptive(white_background,visualization_image,adaptive_detected_points_[image_index]);
         //publishVisualizationImage(visualization_image); 
         }
       //generateVisualization(image_visualization_);
