@@ -95,7 +95,7 @@ private:
     std::vector<float> klDivergence;
     std::vector<int> validRoi;
     int index = 0;
-
+    int index_g = 0;
 
 };
 

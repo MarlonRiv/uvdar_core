@@ -50,7 +50,15 @@ const std::vector<cv::Point>& standardPoints) {
     
     // Use a set to store unique points
     std::set<cv::Point, PointComparator> uniquePoints;
+    
+    std::string outputDir = "/home/rivermar/Desktop/MRS_Master_Project/pres_images";
 
+    // Ensure the output directory exists
+    fs::create_directories(outputDir);
+
+    /* cv::imwrite(outputDir + "/im_" + std::to_string(index) + ".png", inputImage); */
+    
+    index++;
     // Reset detected points
     detectedPoints.clear();
     lastProcessedBinaryROIs_.clear();
@@ -171,7 +179,7 @@ std::vector<cv::Point> UVDARLedDetectAdaptive::applyAdaptiveThreshold(const cv::
 
 
     // Compute and plot histograms
-    cv::Mat histOriginal = plotHistogram(grayImage);
+    /* cv::Mat histOriginal = plotHistogram(grayImage); */
 
 
    /*  cv::Mat grayImage;
@@ -209,10 +217,10 @@ std::vector<cv::Point> UVDARLedDetectAdaptive::applyAdaptiveThreshold(const cv::
     cv::addWeighted(grayImage, 0.25, unsharpMask, 1.75, 0, enhancedImage);
 
 
-    cv::Mat histEnhanced = plotHistogram(enhancedImage);
+    /* cv::Mat histEnhanced = plotHistogram(enhancedImage); */
 
     // Specify the output directory
-    std::string outputDir = "/home/rivermar/Desktop/MRS_Master_Project/roi_images";
+    std::string outputDir = "/home/rivermar/Desktop/MRS_Master_Project/pres_images";
 
     // Ensure the output directory exists
     fs::create_directories(outputDir);
@@ -249,21 +257,22 @@ std::vector<cv::Point> UVDARLedDetectAdaptive::applyAdaptiveThreshold(const cv::
 
 
     //Save the original and enhanced images
-    cv::imwrite(outputDir + "/im_" + std::to_string(index) + ".png", grayImage);
+    /* cv::imwrite(outputDir + "/im_" + std::to_string(index) + ".png", grayImage); */
     index++;
-    // Save the histograms adding an index for each histogram
-    cv::imwrite(outputDir + "/im_" + std::to_string(index) + ".png", histOriginal);
-    index++;
-    //Save the binary ROI using the original image
-    cv::imwrite(outputDir + "/im_" + std::to_string(index) + ".png", binaryRoiOriginal);
-    index++;
+    
+    /* // Save the histograms adding an index for each histogram */
+    /* cv::imwrite(outputDir + "/im_" + std::to_string(index) + ".png", histOriginal); */
+    /* index++; */
+    /* //Save the binary ROI using the original image */
+    /* cv::imwrite(outputDir + "/im_" + std::to_string(index) + ".png", binaryRoiOriginal); */
+    /* index++; */
     //Save the enhanced image
-    cv::imwrite(outputDir + "/im_" + std::to_string(index) + ".png", enhancedImage);
+    /* cv::imwrite(outputDir + "/im_" + std::to_string(index) + ".png", enhancedImage); */
     index++;
-    cv::imwrite(outputDir + "/im_" + std::to_string(index) + ".png", histEnhanced);
-    index++;
-    //Save the binary ROI
-    cv::imwrite(outputDir + "/im_" + std::to_string(index) + ".png", binaryRoi);
+    /* cv::imwrite(outputDir + "/im_" + std::to_string(index) + ".png", histEnhanced); */
+    /* index++; */
+    /* //Save the binary ROI */
+    /* cv::imwrite(outputDir + "/im_" + std::to_string(index) + ".png", binaryRoi); */
     index++;
    
     // Find contours in the binary ROI
@@ -308,9 +317,12 @@ std::vector<cv::Point> UVDARLedDetectAdaptive::applyAdaptiveThreshold(const cv::
 
     // Detect points within this ROI
     std::vector<cv::Point> roiDetectedPoints = detectPointsFromRoi(binaryRoi, roi);
+    /* //Save the binary ROI */
+    /* cv::imwrite(outputDir + "/im_" + std::to_string(index) + ".png", binaryRoi); */
+    index++;
 
     if (adaptive_debug_){
-        //Print the number of detected points
+      //Print the number of detected points
         std::cout << "[UVDARLedDetectAdaptive]: ROI NUMBER OF DETECTED POINTS: " << roiDetectedPoints.size() << std::endl;
     }
 
@@ -884,7 +896,7 @@ void UVDARLedDetectAdaptive::saveRoiImage(const cv::Mat& binaryRoi, const cv::Po
     std::string fullPath = fs::path(outputDir) / filename;
 
     // Save the image
-    cv::imwrite(fullPath, binaryRoi);
+    /* cv::imwrite(fullPath, binaryRoi); */
 }
 //}
 
