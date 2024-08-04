@@ -1,55 +1,80 @@
-#!/usr/bin/env python
-import rospy
-from mrs_msgs.srv import PathSrv
-from std_msgs.msg import Header
-from mrs_msgs.msg import Reference, Path
-from geometry_msgs.msg import Point
+import numpy as np
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+import os
 
-def call_trajectory_service(points):
-    rospy.init_node('trajectory_generation_client')
-    rospy.wait_for_service('/uav1/trajectory_generation/path')
+
+
+def generate_trajectory(waypoints, hover_times, T=0.2):
+    trajectory = []
+
+    # Add the first waypoint
+    x0, y0, z0, h0 = waypoints[0]
+    trajectory.append((x0, y0, z0, h0))
     
-    try:
-        trajectory_service = rospy.ServiceProxy('/uav1/trajectory_generation/path', PathSrv)
+    for i in range(len(waypoints) - 1):
+        x0, y0, z0, h0 = waypoints[i]
+        x1, y1, z1, h1 = waypoints[i+1]
+        hover_time = hover_times[i]
         
-        request = Path()
-        request.header = Header(seq=0, stamp=rospy.Time.now(), frame_id='')
-        request.input_id = 0
-        request.use_heading = False
-        request.fly_now = False
-        request.stop_at_waypoints = False
-        request.loop = False
-        request.max_execution_time = 0.0
-        request.max_deviation_from_path = 0.0
-        request.dont_prepend_current_state = False
-        request.override_constraints = False
-        request.override_max_velocity_horizontal = 0.0
-        request.override_max_acceleration_horizontal = 0.0
-        request.override_max_jerk_horizontal = 0.0
-        request.override_max_velocity_vertical = 0.0
-        request.override_max_acceleration_vertical = 0.0
-        request.override_max_jerk_vertical = 0.0
-        request.relax_heading = False
-        request.points = points  
+        # Calculate number of samples for the hover period
+        num_hover_samples = int(hover_time / T)
+        trajectory.extend([(x0, y0, z0, h0)] * num_hover_samples)
         
-        response = trajectory_service(request)
-        
-        return response
-    except rospy.ServiceException as e:
-        print("Service call failed: %s" % e)
-
-if __name__ == "__main__":
-
-    points = [
-        Reference(position=Point(x=5.0, y=5.0, z=0.0), heading=0.0),
-        Reference(position=Point(x=4.0, y=5.0, z=0.0), heading=0.0),
-        Reference(position=Point(x=3.0, y=5.0, z=0.0), heading=0.0),
-        Reference(position=Point(x=2.0, y=5.0, z=0.0), heading=0.0),
-        Reference(position=Point(x=1.0, y=5.0, z=0.0), heading=0.0),
-        Reference(position=Point(x=0.0, y=5.0, z=0.0), heading=0.0)
-        #Reference(position=Point(x=-5.0, y=5.0, z=0.0), heading=0.0),
-        #Reference(position=Point(x=0.0, y=5.0, z=0.0), heading=0.0)
-    ]
+        # Interpolate waypoints
+        distance = np.sqrt((x1 - x0)**2 + (y1 - y0)**2 + (z1 - z0)**2)
+        num_travel_samples = int(np.ceil(distance / T))
+        if num_travel_samples > 0:
+            x = np.linspace(x0, x1, num_travel_samples + 1)
+            y = np.linspace(y0, y1, num_travel_samples + 1)
+            z = np.linspace(z0, z1, num_travel_samples + 1)
+            heading = np.linspace(h0, h1, num_travel_samples + 1)
+            trajectory.extend([(xi, yi, zi, hi) for xi, yi, zi, hi in zip(x[1:], y[1:], z[1:], heading[1:])])
     
-    response = call_trajectory_service(points)
-    rospy.loginfo(response)
+    # Add hover time at the last waypoint
+    x_last, y_last, z_last, h_last = waypoints[-1]
+    num_final_hover_samples = int(hover_times[-1] / T)
+    trajectory.extend([(x_last, y_last, z_last, h_last)] * num_final_hover_samples)
+    
+    return trajectory
+
+
+def plot_trajectory(trajectory):
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    x, y, z, _ = zip(*trajectory) 
+
+    ax.scatter(x[0], y[0], z[0], color='red', s=100)  
+
+    ax.plot(x, y, z, marker='o', linestyle='-')
+    ax.set_xlabel('X Position')
+    ax.set_ylabel('Y Position')
+    ax.set_zlabel('Z Position')
+    plt.title('3D Trajectory Visualization')
+    plt.show()
+
+
+def save_trajectory(trajectory, filename):
+    with open(filename, 'w') as file:
+        for point in trajectory:
+            line = ','.join(map(str, point)) + '\n'
+            file.write(line)
+
+
+if __name__ == '__main__':
+
+    waypoints = [
+       (-60,15,4,0.785),
+       (-60,15,2,0.785)
+   ]
+
+
+    #0 hover time for each waypoint
+    # time = 240
+    hover_times = [240,5]
+    # hover_times = [time] * len(waypoints)
+    trajectory = generate_trajectory(waypoints, hover_times, T=0.2)
+    plot_trajectory(trajectory)
+    file_name = 'v1_tx1.txt'    
+    file_location = os.path.expanduser('~/catkin_ws/src/uvdar_core/config/trajectory/trajectory_files/' + file_name)
+    save_trajectory(trajectory, file_location)
