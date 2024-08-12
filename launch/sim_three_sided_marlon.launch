@@ -31,7 +31,7 @@
   <arg name="debug" default="false"/>
   <arg name="visual_debug" default="false"/>
   <arg name="gui" default="true"/>
-  <arg name="publish" default="true"/>
+  <arg name="publish" default="false"/>
   
   <arg name="id1" value="0"/>
   <arg name="id2" value="1"/>
