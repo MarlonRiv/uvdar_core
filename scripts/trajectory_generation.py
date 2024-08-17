@@ -64,17 +64,20 @@ def save_trajectory(trajectory, filename):
 if __name__ == '__main__':
 
     waypoints = [
-       (-60,15,4,0.785),
-       (-60,15,2,0.785)
+       (-58,15,5,-0.3),
+       (-58,20,5,-0.3),
+       (-58,15,5,-0.3),
+       (-63,15,5,-0.3),
+       (-58,15,5,-0.3),
    ]
 
 
     #0 hover time for each waypoint
-    # time = 240
-    hover_times = [240,5]
-    # hover_times = [time] * len(waypoints)
+    time = 0
+    # hover_times = []
+    hover_times = [time] * len(waypoints)
     trajectory = generate_trajectory(waypoints, hover_times, T=0.2)
     plot_trajectory(trajectory)
-    file_name = 'v1_tx1.txt'    
+    file_name = 'exp3_traj_tx1.txt'    
     file_location = os.path.expanduser('~/catkin_ws/src/uvdar_core/config/trajectory/trajectory_files/' + file_name)
     save_trajectory(trajectory, file_location)
