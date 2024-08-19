@@ -49,11 +49,9 @@ input=(
 '
   'AutoStart' 'waitForHw; roslaunch mrs_uav_autostart automatic_start.launch
 '
-  'led_manager' 'waitForRos; roslaunch uvdar_core led_manager.launch
+  'uvdar_observer' 'waitForRos; roslaunch uvdar_core rw_left_camera_only_dataset_recording.launch
 '
-  'load_sequence' 'waitForRos; history -s  rosservice call /'"$UAV_NAME"'/uvdar_led_manager_node/select_sequences [1,1,1,1]; history -s  rosservice call /'"$UAV_NAME"'/uvdar_led_manager_node/load_sequences;
-'
-  'Trajectory' 'history -s rosservice call /'"$UAV_NAME"'/control_manager/stop_trajectory_tracking; history -s rosservice call /'"$UAV_NAME"'/control_manager/start_trajectory_tracking; history -s rosservice call /'"$UAV_NAME"'/control_manager/goto_trajectory_start; history -s roslaunch uvdar_core load_trajectory.launch file:="v1_tx1.txt"; 
+  'Trajectory' 'history -s rosservice call /'"$UAV_NAME"'/control_manager/stop_trajectory_tracking; history -s rosservice call /'"$UAV_NAME"'/control_manager/start_trajectory_tracking; history -s rosservice call /'"$UAV_NAME"'/control_manager/goto_trajectory_start; history -s roslaunch uvdar_core load_trajectory.launch file:="trajectory_rx.txt";
 '
 # do NOT modify the command list below
   'EstimDiag' 'waitForHw; rostopic echo /'"$UAV_NAME"'/estimation_manager/diagnostics
