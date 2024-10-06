@@ -1,6 +1,6 @@
 #!/bin/bash
 
-path="/home/\$(optenv USER mrs)/bag_files/latest/"
+path="/home/\$(optenv USER mrs)/bag_files/paper_rosbags/"
 
 # By default, we record everything.
 # Except for this list of EXCLUDED topics:
@@ -17,9 +17,10 @@ exclude=(
 # or just a CRASH.
 
 # Every topic containing "compressed"
+'(.*)uvdar_blink_visualization(.*)'
 '(.*)compressed(.*)'
 # Every topic containing "image_raw"
-# '(.*)image_raw(.*)'
+ '(.*)image_raw(.*)'
 # Every topic containing "theora"
 '(.*)theora(.*)'
 # Every topic containing "h264"
