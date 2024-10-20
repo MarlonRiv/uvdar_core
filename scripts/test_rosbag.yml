@@ -20,7 +20,7 @@ windows:
       layout: even-vertical
       panes:
         # - waitForOffBoard; rosbag record -O ~/Desktop/MRS_Master_Project/rosbags/good_sequence/diff_power_18m_th150_topics.bag /uav7/uvdar_bluefox/left/image_raw /uav7/uvdar/points_seen_left /uav7/uvdar/blinkers_seen_back /uav7/uvdar/ami_all_seq_info_back 
-        - waitForRos; waitForOffBoard; ./record.sh 
+        # - waitForRos; waitForOffBoard; ./record.sh 
         #- rosbag record -O rosbags/first/omta_38.bag -e "(.*)_camp"
         # - rosbag record -O rosbags/first/omta_39.bag -e "(.*)_camp"
         # - rosbag record -O rosbags/first/4dht_38.bag -e "(.*)_camp"
@@ -35,11 +35,10 @@ windows:
         # - waitForRos; sleep 3; rosbag play --clock ~/experiments/20_04/two_tx/two_tx/rx/occlusion_1/rx.bag
         # - waitForRos; sleep 3; rosbag play --clock ~/experiments/20_04/two_tx/two_tx/rx/occlusion_2/rx.bag
         # - waitForRos; rosbag play --clock ~/experiments/20_04/tumult/tumult/rx/rx.bag
-        - waitForRos; sleep 3; rosbag play --clock ~/bag_files/datasets_08_2024/uav36_rosbags_rx/marlon/71_2024_08_20_14_35_41variant3/_2024-08-20-14-37-28.bag
+        - waitForRos; sleep 3; rosbag play --clock ~/bag_files/datasets_08_2024/uav36_rosbags_rx/marlon/69_2024_08_20_14_12_22variant1/_2024-08-20-14-14-09.bag
   - rqt:
       layout: even-vertical
       panes:
-
         # - waitForRos; sleep 3; rqt_image_view
         - waitForRos; sleep 3; rostopic echo /uav36/uvdar/blinkers_seen_left 
 

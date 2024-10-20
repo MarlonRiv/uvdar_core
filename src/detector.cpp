@@ -350,8 +350,12 @@ private:
       for (const auto& point : msg->points) {
         //cv::Point cvPoint(static_cast<int>(point.x), static_cast<int>(point.y));
         //Without casting
-        cv::Point cvPoint(point.x, point.y);
-        trackingPointsPerCamera[image_index].push_back(cvPoint);
+        if (point.value > 0) {
+          
+         /* ROS_INFO_STREAM("[UVDARDetector]: Point value " << point.value); */
+          cv::Point cvPoint(point.x, point.y);
+          trackingPointsPerCamera[image_index].push_back(cvPoint);
+        }
       }
 
       ROS_INFO_STREAM("[UVDARDetector]: Camera " << image_index << " Tracking points: " << trackingPointsPerCamera[image_index].size());
@@ -375,7 +379,6 @@ private:
     }
   }
   //}
-
 
   /* processStandard //{ */
   void processStandard(const cv_bridge::CvImageConstPtr& image, int image_index){
@@ -467,14 +470,13 @@ private:
     msg_adaptive.stamp = image->header.stamp;
     msg_adaptive.num_rois = adaptiveData.numRois;
     msg_adaptive.roi_detected_points = adaptiveData.numberDetectedPoints;
-    msg_adaptive.roi_threshold_used = adaptiveData.thresholdValue;
-    msg_adaptive.roi_kl_divergence = adaptiveData.klDivergence;
-    msg_adaptive.roi_is_valid = adaptiveData.validRoi;
+    msg_adaptive.roi_threshold_used = adaptiveData.thresholdValues;
+    msg_adaptive.roi_kl_divergence = adaptiveData.klDivergences;
+    msg_adaptive.roi_is_valid = adaptiveData.validRois;
 
     pub_adaptive_logging_[image_index].publish(msg_adaptive);
   }
   //}
-
 
   /* publishStandard //{ */
   void publishStandard(const cv_bridge::CvImageConstPtr& image, int image_index, const std::vector<cv::Point>& detected_points) {
@@ -539,7 +541,6 @@ private:
     if( _adaptive_threshold_ && trackingPointsPerCamera[image_index].size() > 0){
        
       ROS_INFO_STREAM("[UVDARDetector]: Tracking points per camera: " << trackingPointsPerCamera[image_index].size()); 
-      received_tracking_points_ = true;
 
       
       {
@@ -565,8 +566,9 @@ private:
      
     }
     else{
-      
-      ROS_INFO_STREAM("[UVDARDetector]: No tracking points for camera " << image_index);
+
+      adaptive_detected_points_[image_index].clear(); 
+      ROS_INFO_STREAM("[UVDARDetector]: Processing with standard detection " << image_index);
 
       /* ROS_INFO_STREAM("[UVDARDetector]: Locking cam image mutex " << image_index << "..."); */
       
@@ -589,7 +591,7 @@ private:
         processStandard(image, image_index);
 
 
-      }
+     }
 
     }
 
@@ -633,21 +635,23 @@ private:
   void VisualizationThread([[maybe_unused]] const ros::TimerEvent& te) {
     if (initialized_){
         cv::Mat visualization_image;
-        if(_adaptive_threshold_){
+
+        if (_adaptive_threshold_) {
         int image_index = 0;
-        cv::Mat white_background = cv::Mat::ones(images_current_[image_index].size(),images_current_[image_index].type()) * 255;
-        uvda_[image_index]->generateVisualizationAdaptive(images_current_[image_index],visualization_image,adaptive_detected_points_[image_index]);
-        //publishVisualizationImage(visualization_image); 
+        cv::Mat white_background = cv::Mat::ones(images_current_[image_index].size(), images_current_[image_index].type()) * 255;
+        uvda_[image_index]->generateVisualizationAdaptive(images_current_[image_index], visualization_image, adaptive_detected_points_[image_index]);
+        publishVisualizationImage(visualization_image); 
         }
-      //generateVisualization(image_visualization_);
-        
-      if ((visualization_image.cols != 0) && (visualization_image.rows != 0)){
+
+      //TODO check why its crashing when including the standard generateVisualization
+      /* generateVisualization(image_visualization_); */
+      if ((image_visualization_.cols != 0) && (image_visualization_.rows != 0)){
         if (_publish_visualization_){
           ROS_INFO_STREAM("[UVDARDetector]: Publishing visualization.");
-          pub_visualization_->publish("uvdar_detection_visualization", 0.01, visualization_image, true);
+          pub_visualization_->publish("uvdar_detection_visualization", 0.01, image_visualization_, true);
         }
         if (_gui_){
-          cv::imshow("ocv_uvdar_detection_" + _uav_name_, visualization_image);
+          cv::imshow("ocv_uvdar_detection_" + _uav_name_, image_visualization_);
           cv::waitKey(25);
         }
       }
@@ -780,7 +784,6 @@ private:
   std::vector<std::vector<cv::Point>> adaptive_detected_points_;
   std::vector<std::vector<cv::Point>> combinedPoints_;
 
-  bool received_tracking_points_ = false;
 
   std::vector<ROIData> ROI_data;
 };
