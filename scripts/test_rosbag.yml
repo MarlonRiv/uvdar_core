@@ -36,11 +36,12 @@ windows:
         # - waitForRos; sleep 3; rosbag play --clock ~/experiments/20_04/two_tx/two_tx/rx/occlusion_2/rx.bag
         # - waitForRos; rosbag play --clock ~/experiments/20_04/tumult/tumult/rx/rx.bag
         - waitForRos; sleep 3; rosbag play --clock ~/bag_files/datasets_08_2024/uav36_rosbags_rx/marlon/69_2024_08_20_14_12_22variant1/_2024-08-20-14-14-09.bag
-  - rqt:
+  - blinkers-seen:
       layout: even-vertical
       panes:
         # - waitForRos; sleep 3; rqt_image_view
         - waitForRos; sleep 3; rostopic echo /uav36/uvdar/blinkers_seen_left 
+        - waitForRos; sleep 3; rostopic echo /uav36/uvdar/adaptive_logging_left 
 
  # - waitForCompile; cd ~/uvdar_rosbag/tracking/uav7/22_2021_04_27_09_11_19_L12/ ; rosbag play --clock -s 30 _2021-04-27-09-11-56.bag
   # - trajectory:

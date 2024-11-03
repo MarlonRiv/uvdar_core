@@ -33,7 +33,7 @@ namespace uvdar
   {
   public:
     UVDARLedDetectAdaptive(int neighborhoodSize = 25, double point_similarity_threshold = 5.0, std::string adaptive_method = "Otsu",
-                           bool adaptive_debug = false);
+                           bool adaptive_debug = false, int contours_size_limit = 4, int contour_max_size_limit = 15, int roi_detected_points_limit = 5);
     ~UVDARLedDetectAdaptive();
 
     bool processImageAdaptive(const cv::Mat& inputImage, const std::vector<cv::Point>& trackingPoints, std::vector<cv::Point>& detectedPoints,
@@ -88,6 +88,9 @@ namespace uvdar
     double point_similarity_threshold_;
     std::string adaptive_method_;
     bool adaptive_debug_;
+    int contours_size_limit_; 
+    int contour_max_size_limit_; 
+    int roi_detected_points_limit_; 
     int roiIndex_;
     int MAX_SIZE = 50;
     int MIN_SIZE = 5;
@@ -95,6 +98,7 @@ namespace uvdar
     std::vector<cv::Rect> lastProcessedROIs_;     // For storing ROI positions
     std::vector<cv::Point> allRoiDetectedPoints;  // For storing ROI positions
     std::mutex mutex_viz_rois_;
+    std::mutex mutex_rois_data_;
 
     int numRois_;
     std::vector<int> numberDetectedPoints_;

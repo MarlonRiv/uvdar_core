@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # Mapping file path
-mapping_file="file_mapping_dynamic.csv"
+mapping_file="file_mapping_adaptive_variant01.csv"
 
 # Output directory for CSV files
-output_csv_dir=~/Desktop/MRS_Master_Project/paper/dynamic_raw_csv
+output_csv_dir=~/Desktop/MRS_Master_Project/paper/adaptive_raw_csv
 
 # Make sure the output directory exists
 mkdir -p "$output_csv_dir"

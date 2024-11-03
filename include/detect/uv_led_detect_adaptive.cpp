@@ -27,11 +27,15 @@ struct PointComparator
 namespace uvdar
 {
 
-  UVDARLedDetectAdaptive::UVDARLedDetectAdaptive(int neighborhoodSize, double point_similarity_threshold, std::string adaptive_method, bool adaptive_debug)
+  UVDARLedDetectAdaptive::UVDARLedDetectAdaptive(int neighborhoodSize, double point_similarity_threshold, std::string adaptive_method, bool adaptive_debug, int contours_size_limit, int contour_max_size_limit, int roi_detected_points_limit)
       : neighborhoodSize_(neighborhoodSize),
         point_similarity_threshold_(point_similarity_threshold),
         adaptive_method_(adaptive_method),
-        adaptive_debug_(adaptive_debug)
+        adaptive_debug_(adaptive_debug),
+        contours_size_limit_(contours_size_limit),
+        contour_max_size_limit_(contour_max_size_limit),
+        roi_detected_points_limit_(roi_detected_points_limit)
+
   {
   }
 
@@ -57,14 +61,12 @@ namespace uvdar
      * True if the process is successful, False otherwise
      */
 
-    {
-      std::scoped_lock lock(mutex_viz_rois_);
+    std::scoped_lock lock(mutex_viz_rois_, mutex_rois_data_);
 
-      // Reset detected points
-      detectedPoints.clear();
-      lastProcessedBinaryROIs_.clear();
-      lastProcessedROIs_.clear();
-    }
+    // Reset detected points
+    detectedPoints.clear();
+    lastProcessedBinaryROIs_.clear();
+    lastProcessedROIs_.clear();
 
     // Reset the number of ROIs
     numRois_ = 0;
@@ -91,10 +93,12 @@ namespace uvdar
     if (adaptive_debug_)
     {
       // Print the size of the rois
-      std::cout << "[UVDARLedDetectAdaptive]: SIZE OF ROIS: " << rois.size() << std::endl;
+      std::cout << "[UVDARLedDetectAdaptive]: NUMBER OF ROIS: " << rois.size() << std::endl;
     }
 
     const auto mergedROIs = mergeOverlappingROIs(rois, inputImage.size(), 0.05);  // Overlap threshold of 5%
+
+    numRois_ = mergedROIs.size();
 
     if (adaptive_debug_)
     {
@@ -191,7 +195,7 @@ namespace uvdar
     }
 
     // TODO find proper value for noisy ROI
-    if (contours.size() >= 6)
+    if (static_cast<int>(contours.size()) >= contours_size_limit_)
     {
       // Return empty roiDetectedPoints
       std::vector<cv::Point> empty_roiDetectedPoints = {};
@@ -199,14 +203,14 @@ namespace uvdar
     }
 
     // TODO find proper value for MAX_AREA
-    int MAX_AREA = 50;
+    /* int MAX_AREA = 15; */
 
     for (const auto& contour : contours)
     {
       // Calculate the area of the contour
       double area = cv::contourArea(contour);
       // Filter based on area
-      if (area < MAX_AREA)
+      if (area < contour_max_size_limit_)
       {
         if (adaptive_debug_)
         {
@@ -236,55 +240,52 @@ namespace uvdar
     // 5
 
 
-    std::scoped_lock lock(mutex_viz_rois_);
+    if (static_cast<int>(roiDetectedPoints.size()) > roi_detected_points_limit_)
     {
-      if (roiDetectedPoints.size() > 4)
+
+      if (adaptive_debug_)
       {
-
-        if (adaptive_debug_)
-        {
-          // Print the number of detected points
-          std::cout << "[UVDARLedDetectAdaptive]: NOISY ROI: " << roiDetectedPoints.size() << std::endl;
-        }
-        numberDetectedPoints_.push_back(roiDetectedPoints.size());
-        thresholdValues_.push_back(thresholdValue_);
-        if (adaptive_method_ == "Otsu" || adaptive_method_ == "otsu")
-        {
-          klDivergences_.push_back(0.0);
-        } else
-        {
-          klDivergences_.push_back(minKLDivergence_);
-        }
-        validRois_.push_back(0);
-
-        // Return empty roiDetectedPoints
-        std::vector<cv::Point> empty_roiDetectedPoints = {};
-        return empty_roiDetectedPoints;
-        // Clear the lastProcessedROIs_ and lastProcessedBinaryROIs_ vectors
-        lastProcessedROIs_.clear();
-        lastProcessedBinaryROIs_.clear();
+        // Print the number of detected points
+        std::cout << "[UVDARLedDetectAdaptive]: NOISY ROI: " << roiDetectedPoints.size() << std::endl;
+      }
+      numberDetectedPoints_.push_back(roiDetectedPoints.size());
+      thresholdValues_.push_back(thresholdValue_);
+      if (adaptive_method_ == "Otsu" || adaptive_method_ == "otsu")
+      {
+        klDivergences_.push_back(0.0);
       } else
       {
-
-        // This is the reason it seems the visualization is blinking, getting some noisy rois in between and not being used
-        lastProcessedROIs_.push_back(roi);  // Store the ROI for visualization
-        // Store the binary ROI (For debugging/visualization)
-        lastProcessedBinaryROIs_.push_back(binaryRoi);
-
-
-        numberDetectedPoints_.push_back(roiDetectedPoints.size());
-        thresholdValues_.push_back(thresholdValue_);
-        if (adaptive_method_ == "Otsu" || adaptive_method_ == "otsu")
-        {
-          klDivergences_.push_back(0.0);
-        } else
-        {
-          klDivergences_.push_back(minKLDivergence_);
-        }
-        validRois_.push_back(1);
-
-        return roiDetectedPoints;
+        klDivergences_.push_back(minKLDivergence_);
       }
+      validRois_.push_back(0);
+
+      // Return empty roiDetectedPoints
+      std::vector<cv::Point> empty_roiDetectedPoints = {};
+      return empty_roiDetectedPoints;
+      // Clear the lastProcessedROIs_ and lastProcessedBinaryROIs_ vectors
+      lastProcessedROIs_.clear();
+      lastProcessedBinaryROIs_.clear();
+    } else
+    {
+
+      // This is the reason it seems the visualization is blinking, getting some noisy rois in between and not being used
+      lastProcessedROIs_.push_back(roi);  // Store the ROI for visualization
+      // Store the binary ROI (For debugging/visualization)
+      lastProcessedBinaryROIs_.push_back(binaryRoi);
+
+
+      numberDetectedPoints_.push_back(roiDetectedPoints.size());
+      thresholdValues_.push_back(thresholdValue_);
+      if (adaptive_method_ == "Otsu" || adaptive_method_ == "otsu")
+      {
+        klDivergences_.push_back(0.0);
+      } else
+      {
+        klDivergences_.push_back(minKLDivergence_);
+      }
+      validRois_.push_back(1);
+
+      return roiDetectedPoints;
     }
   }
   //}
@@ -696,7 +697,7 @@ namespace uvdar
     {
       return;
     }
-   
+
 
     std::scoped_lock lock(mutex_viz_rois_);
     // Overlay binary ROIs
@@ -811,6 +812,7 @@ namespace uvdar
      * A tuple containing the number of detected points, the threshold value, the KL divergence, and the validity of the ROI
      */
 
+    std::scoped_lock lock(mutex_rois_data_);
     ROIData adaptiveData;
     adaptiveData.numRois = numRois_;
     adaptiveData.numberDetectedPoints = numberDetectedPoints_;

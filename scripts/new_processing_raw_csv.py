@@ -15,8 +15,8 @@ name_experiment = args.name_experiment  # e.g., 'variant1_th40'
 variant = args.variant  # e.g., 1
 
 # Paths
-input_csv_path = os.path.expanduser('~/Desktop/MRS_Master_Project/paper/new_raw_csv/' + name_experiment + '.csv')
-cleaned_file_path = os.path.expanduser('~/Desktop/MRS_Master_Project/paper/processed_csv_automation_v2/' + name_experiment + '_processed.csv')
+input_csv_path = os.path.expanduser('~/Desktop/MRS_Master_Project/paper/adaptive_raw_csv/' + name_experiment + '.csv')
+cleaned_file_path = os.path.expanduser('~/Desktop/MRS_Master_Project/paper/processed_csv_automation_adaptive/' + name_experiment + '_processed.csv')
 
 # Read data
 data = pd.read_csv(input_csv_path)

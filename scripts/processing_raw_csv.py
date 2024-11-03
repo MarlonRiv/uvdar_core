@@ -17,8 +17,8 @@ name_experiment = args.name_experiment  # e.g., 'variant1_th40'
 subset_rx = args.subset_rx  # e.g., 'rx1_s1'
 
 # Paths
-input_csv_path = os.path.expanduser('~/Desktop/MRS_Master_Project/paper/new_raw_csv/' + name_experiment + '.csv')
-cleaned_file_path = os.path.expanduser('~/Desktop/MRS_Master_Project/paper/processed_csv_automation/' + name_experiment + '_'+ subset_rx +'_processed.csv')
+input_csv_path = os.path.expanduser('~/Desktop/MRS_Master_Project/paper/adaptive_raw_csv/' + name_experiment + '.csv')
+cleaned_file_path = os.path.expanduser('~/Desktop/MRS_Master_Project/paper/processed_csv_automation_adaptive/' + name_experiment + '_'+ subset_rx +'_processed.csv')
 
 # Read data
 data = pd.read_csv(input_csv_path)
