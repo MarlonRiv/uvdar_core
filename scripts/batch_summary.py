@@ -16,8 +16,14 @@ import matplotlib.pyplot as plt
 #     '/home/rivermar/Desktop/MRS_Master_Project/paper/processed_csv_automation_adaptive/variant01_adaptive_otsu_processed.csv',
 #     '/home/rivermar/Desktop/MRS_Master_Project/paper/processed_csv_automation_adaptive/variant01_adaptive_kl_processed.csv',
 #     '/home/rivermar/Desktop/MRS_Master_Project/paper/processed_csv_automation_adaptive/variant01_adaptive_otsu_c4_d5_mxs15_invalids_processed.csv',
+#     '/home/rivermar/Desktop/MRS_Master_Project/paper/processed_csv_automation_adaptive/variant01_adaptive_otsu_valid_standard_4_15_5_processed.csv',
+#     '/home/rivermar/Desktop/MRS_Master_Project/paper/processed_csv_automation_adaptive/variant01_adaptive_otsu_sanity_check_processed.csv',
+#     '/home/rivermar/Desktop/MRS_Master_Project/paper/processed_csv_automation_adaptive/variant01_otsu_valid_4_5_15_no_merging_processed.csv',
 # ]
-
+#adaptive variant02
+file_paths = [
+    '/home/rivermar/Desktop/MRS_Master_Project/paper/processed_csv_automation_adaptive/variant02_adaptive_otsu_first_processed.csv',
+ ]
 #Variant01
 # # Define the file paths and thresholds
 # file_paths = [
@@ -42,26 +48,27 @@ import matplotlib.pyplot as plt
 #     '/home/rivermar/Desktop/MRS_Master_Project/paper/processed_csv_automation_v2/variant02_v2_th200_processed.csv',
 # ]
 
-#Variant03
-# Define the file paths and thresholds
-file_paths = [
-    '/home/rivermar/Desktop/MRS_Master_Project/paper/processed_csv_automation_v2/variant03_v2_th40_processed.csv',
-    '/home/rivermar/Desktop/MRS_Master_Project/paper/processed_csv_automation_v2/variant03_v2_th60_processed.csv',
-    '/home/rivermar/Desktop/MRS_Master_Project/paper/processed_csv_automation_v2/variant03_v2_th80_processed.csv',
-    '/home/rivermar/Desktop/MRS_Master_Project/paper/processed_csv_automation_v2/variant03_v2_th100_processed.csv',
-    '/home/rivermar/Desktop/MRS_Master_Project/paper/processed_csv_automation_v2/variant03_v2_th120_processed.csv',
-    '/home/rivermar/Desktop/MRS_Master_Project/paper/processed_csv_automation_v2/variant03_v2_th160_processed.csv',
-    '/home/rivermar/Desktop/MRS_Master_Project/paper/processed_csv_automation_v2/variant03_v2_th200_processed.csv',
-]
+##Variant03
+## Define the file paths and thresholds
+#file_paths = [
+#    '/home/rivermar/Desktop/MRS_Master_Project/paper/processed_csv_automation_v2/variant03_v2_th40_processed.csv',
+#    '/home/rivermar/Desktop/MRS_Master_Project/paper/processed_csv_automation_v2/variant03_v2_th60_processed.csv',
+#    '/home/rivermar/Desktop/MRS_Master_Project/paper/processed_csv_automation_v2/variant03_v2_th80_processed.csv',
+#    '/home/rivermar/Desktop/MRS_Master_Project/paper/processed_csv_automation_v2/variant03_v2_th100_processed.csv',
+#    '/home/rivermar/Desktop/MRS_Master_Project/paper/processed_csv_automation_v2/variant03_v2_th120_processed.csv',
+#    '/home/rivermar/Desktop/MRS_Master_Project/paper/processed_csv_automation_v2/variant03_v2_th160_processed.csv',
+#    '/home/rivermar/Desktop/MRS_Master_Project/paper/processed_csv_automation_v2/variant03_v2_th200_processed.csv',
+#]
 
 
 thresholds = [40, 60, 80, 100, 120, 160, 200]
-keys = ['invalid', 'valid', 'valid_4_5_50', 'valid_4_4_15', 'valid_4_5_15', 'valid_5_5_,15','otsu', 'kl','valid_4_5_15_invalids']
+# keys = ['invalid', 'valid', 'valid_4_5_50', 'valid_4_4_15', 'valid_4_5_15', 'valid_5_5_,15','otsu', 'kl','valid_4_5_15_invalids', 'valid_and_standards_4_5_15', 'consistency_check', 'no-merging']
+keys = ['first_variant02']
 
 # Initialize a dataframe to hold the summarized data
 summary_data = {
-    # 'Key': [],
-    'Threshold': [],
+    'Key': [],
+    # 'Threshold': [],
     'Total Errors Signal 1': [],
     'Total Errors Signal 2': [],
     'Total Instances Signal 1': [],
@@ -81,8 +88,8 @@ summary_data = {
 }
 
 # Loop through the files and calculate the required metrics
-# for path, key in zip(file_paths, keys):
-for path, threshold in zip(file_paths, thresholds):
+for path, key in zip(file_paths, keys):
+# for path, threshold in zip(file_paths, thresholds):
     # Load the data
     df = pd.read_csv(path)
     
@@ -112,8 +119,8 @@ for path, threshold in zip(file_paths, thresholds):
     decoding_quality_signal_2 = ((df['num_points_signal_2'] - df['num_errors_signal_2']).clip(0, 3) / 3).mean() * 100
 
     # Append the data to the summary
-    # summary_data['Key'].append(key)
-    summary_data['Threshold'].append(threshold)
+    summary_data['Key'].append(key)
+    # summary_data['Threshold'].append(threshold)
     summary_data['Total Errors Signal 1'].append(total_errors_signal_1)
     summary_data['Total Errors Signal 2'].append(total_errors_signal_2)
     summary_data['Total Instances Signal 1'].append(total_signal_1)
@@ -128,8 +135,8 @@ for path, threshold in zip(file_paths, thresholds):
     summary_data['Average Decoding Quality Signal 2'].append(decoding_quality_signal_2)
 
 # After looping, calculate performance differences and optimization metrics
-# for i in range(len(summary_data['Key'])):
-for i in range(len(summary_data['Threshold'])):
+for i in range(len(summary_data['Key'])):
+# for i in range(len(summary_data['Threshold'])):
     error_rate_diff = summary_data['Error Rate Signal 2'][i] - summary_data['Error Rate Signal 1'][i]
     relative_error_diff = (error_rate_diff / summary_data['Error Rate Signal 1'][i]) * 100 if summary_data['Error Rate Signal 1'][i] != 0 else 0
     combined_error_rate = summary_data['Error Rate Signal 1'][i] + summary_data['Error Rate Signal 2'][i]
@@ -144,13 +151,13 @@ for i in range(len(summary_data['Threshold'])):
 df_summary = pd.DataFrame(summary_data)
 
 # Find the optimal threshold based on combined error rate and max error rate
-# optimal_combined_threshold = df_summary.loc[df_summary['Combined Error Rate'].idxmin(), 'Key']
-optimal_combined_threshold = df_summary.loc[df_summary['Combined Error Rate'].idxmin(), 'Threshold']
-# optimal_max_threshold = df_summary.loc[df_summary['Max Error Rate'].idxmin(), 'Key']
-optimal_max_threshold = df_summary.loc[df_summary['Max Error Rate'].idxmin(), 'Threshold']
+optimal_combined_threshold = df_summary.loc[df_summary['Combined Error Rate'].idxmin(), 'Key']
+# optimal_combined_threshold = df_summary.loc[df_summary['Combined Error Rate'].idxmin(), 'Threshold']
+optimal_max_threshold = df_summary.loc[df_summary['Max Error Rate'].idxmin(), 'Key']
+# optimal_max_threshold = df_summary.loc[df_summary['Max Error Rate'].idxmin(), 'Threshold']
 
 # Save the summary to a CSV file
-df_summary.to_csv('threshold_analysis_summary_variant03_v2.csv', index=False)
+df_summary.to_csv('threshold_analysis_summary_adaptive.csv', index=False)
 
 # Output the optimal thresholds
 print(f'Optimal Threshold based on Combined Error Rate: {optimal_combined_threshold}')

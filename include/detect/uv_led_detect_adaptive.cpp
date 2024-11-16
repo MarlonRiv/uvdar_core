@@ -27,14 +27,21 @@ struct PointComparator
 namespace uvdar
 {
 
-  UVDARLedDetectAdaptive::UVDARLedDetectAdaptive(int neighborhoodSize, double point_similarity_threshold, std::string adaptive_method, bool adaptive_debug, int contours_size_limit, int contour_max_size_limit, int roi_detected_points_limit)
+  UVDARLedDetectAdaptive::UVDARLedDetectAdaptive(int neighborhoodSize, double point_similarity_threshold, std::string adaptive_method, bool adaptive_debug,
+                                                 int contours_size_limit, int contour_max_size_limit, int roi_detected_points_limit, double sigma_x,
+                                                 double sigma_y, double grayscale_roi_weight, double sharped_roi_weight)
       : neighborhoodSize_(neighborhoodSize),
         point_similarity_threshold_(point_similarity_threshold),
         adaptive_method_(adaptive_method),
         adaptive_debug_(adaptive_debug),
         contours_size_limit_(contours_size_limit),
         contour_max_size_limit_(contour_max_size_limit),
-        roi_detected_points_limit_(roi_detected_points_limit)
+        roi_detected_points_limit_(roi_detected_points_limit),
+        sigmaX_(sigma_x),
+        sigmaY_(sigma_y),
+        grayscale_ROI_weight_(grayscale_roi_weight),
+        sharped_ROI_weight_(sharped_roi_weight)
+
 
   {
   }
@@ -82,6 +89,10 @@ namespace uvdar
       return false;
     }
 
+    // To include the standardPoints
+    /* std::vector<cv::Point> combinedPoints; */
+    // Add all adaptive points
+    /* combinedPoints.insert(combinedPoints.end(), trackingPoints.begin(), trackingPoints.end()); */
 
     std::vector<cv::Rect> rois;
     for (const auto& point : trackingPoints)
@@ -151,16 +162,14 @@ namespace uvdar
 
     // Apply Gaussian blur to the ROI
     cv::Mat blurred;
-    double sigmaX = 6.0;
-    double sigmaY = 6.0;
-    cv::GaussianBlur(grayImage, blurred, cv::Size(0, 0), sigmaX, sigmaY);
+    cv::GaussianBlur(grayImage, blurred, cv::Size(0, 0), sigmaX_, sigmaY_);
 
     // Create unsharp mask by subtracting the blurred version from the original image
     cv::Mat unsharpMask = grayImage - blurred;
 
     // Apply the unsharp mask to the original image to enhance edges
     cv::Mat enhancedImage;
-    cv::addWeighted(grayImage, 0.25, unsharpMask, 1.75, 0, enhancedImage);
+    cv::addWeighted(grayImage, grayscale_ROI_weight_, unsharpMask, sharped_ROI_weight_, 0, enhancedImage);
 
     // BinaryRoi to save after applying the threshold
     cv::Mat binaryRoi;
@@ -188,6 +197,10 @@ namespace uvdar
     // Create a mask to draw the filtered contours
     cv::Mat mask = cv::Mat::zeros(binaryRoi.size(), CV_8UC1);
 
+    lastProcessedROIs_.push_back(roi);  // Store the ROI for visualization
+    // Store the binary ROI (For debugging/visualization)
+    lastProcessedBinaryROIs_.push_back(binaryRoi);
+
     if (adaptive_debug_)
     {
       // Print the contours size
@@ -197,8 +210,16 @@ namespace uvdar
     // TODO find proper value for noisy ROI
     if (static_cast<int>(contours.size()) >= contours_size_limit_)
     {
+      if (adaptive_debug_)
+      {
+        std::cout << "[UVDARLedDetectAdaptive]: NUMBER OF CONTOURS OUTSIDE OF THE LIMIT: " << contours.size() << std::endl;
+      }
       // Return empty roiDetectedPoints
       std::vector<cv::Point> empty_roiDetectedPoints = {};
+      thresholdValues_.push_back(thresholdValue_);
+      klDivergences_.push_back(0.0);
+      numberDetectedPoints_.push_back(0);
+      validRois_.push_back(0);
       return empty_roiDetectedPoints;
     }
 
@@ -236,9 +257,16 @@ namespace uvdar
       std::cout << "[UVDARLedDetectAdaptive]: ROI NUMBER OF DETECTED POINTS: " << roiDetectedPoints.size() << std::endl;
     }
 
-    // TODO find the proper value of the detected points
-    // 5
+    numberDetectedPoints_.push_back(roiDetectedPoints.size());
+    thresholdValues_.push_back(thresholdValue_);
 
+    if (adaptive_method_ == "Otsu" || adaptive_method_ == "otsu")
+    {
+      klDivergences_.push_back(0.0);
+    } else
+    {
+      klDivergences_.push_back(minKLDivergence_);
+    }
 
     if (static_cast<int>(roiDetectedPoints.size()) > roi_detected_points_limit_)
     {
@@ -257,32 +285,23 @@ namespace uvdar
       {
         klDivergences_.push_back(minKLDivergence_);
       }
-      validRois_.push_back(0);
 
+      validRois_.push_back(0);
       // Return empty roiDetectedPoints
       std::vector<cv::Point> empty_roiDetectedPoints = {};
-      return empty_roiDetectedPoints;
       // Clear the lastProcessedROIs_ and lastProcessedBinaryROIs_ vectors
-      lastProcessedROIs_.clear();
-      lastProcessedBinaryROIs_.clear();
+      /* lastProcessedROIs_.clear(); */
+      /* lastProcessedBinaryROIs_.clear(); */
+
+      return empty_roiDetectedPoints;
     } else
     {
 
-      // This is the reason it seems the visualization is blinking, getting some noisy rois in between and not being used
-      lastProcessedROIs_.push_back(roi);  // Store the ROI for visualization
-      // Store the binary ROI (For debugging/visualization)
-      lastProcessedBinaryROIs_.push_back(binaryRoi);
+      /* // This is the reason it seems the visualization is blinking, getting some noisy rois in between and not being used */
+      /* lastProcessedROIs_.push_back(roi);  // Store the ROI for visualization */
+      /* // Store the binary ROI (For debugging/visualization) */
+      /* lastProcessedBinaryROIs_.push_back(binaryRoi); */
 
-
-      numberDetectedPoints_.push_back(roiDetectedPoints.size());
-      thresholdValues_.push_back(thresholdValue_);
-      if (adaptive_method_ == "Otsu" || adaptive_method_ == "otsu")
-      {
-        klDivergences_.push_back(0.0);
-      } else
-      {
-        klDivergences_.push_back(minKLDivergence_);
-      }
       validRois_.push_back(1);
 
       return roiDetectedPoints;
@@ -495,6 +514,11 @@ namespace uvdar
       }
       if (!isOverlap)
       {
+        if (adaptive_debug_)
+        {
+
+          std::cout << "[UVDARLedDetectAdaptive]: ADDING STANDARD POINT " << std::endl;
+        }
         combinedPoints.push_back(standardPoint);
       }
     }

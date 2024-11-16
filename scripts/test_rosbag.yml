@@ -35,7 +35,7 @@ windows:
         # - waitForRos; sleep 3; rosbag play --clock ~/experiments/20_04/two_tx/two_tx/rx/occlusion_1/rx.bag
         # - waitForRos; sleep 3; rosbag play --clock ~/experiments/20_04/two_tx/two_tx/rx/occlusion_2/rx.bag
         # - waitForRos; rosbag play --clock ~/experiments/20_04/tumult/tumult/rx/rx.bag
-        - waitForRos; sleep 3; rosbag play --clock ~/bag_files/datasets_08_2024/uav36_rosbags_rx/marlon/69_2024_08_20_14_12_22variant1/_2024-08-20-14-14-09.bag
+        - waitForRos; sleep 3; rosbag play --clock ~/bag_files/datasets_08_2024/uav36_rosbags_rx/marlon/70_2024_08_20_14_22_18variant2/_2024-08-20-14-23-37.bag
   - blinkers-seen:
       layout: even-vertical
       panes:

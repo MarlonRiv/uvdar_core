@@ -33,7 +33,8 @@ namespace uvdar
   {
   public:
     UVDARLedDetectAdaptive(int neighborhoodSize = 25, double point_similarity_threshold = 5.0, std::string adaptive_method = "Otsu",
-                           bool adaptive_debug = false, int contours_size_limit = 4, int contour_max_size_limit = 15, int roi_detected_points_limit = 5);
+                           bool adaptive_debug = false, int contours_size_limit = 4, int contour_max_size_limit = 15, int roi_detected_points_limit = 5,
+                           double sigma_x = 6.0, double sigma_y = 6.0, double grayscale_roi_weight = 0.25, double sharped_roi_weight = 1.75);
     ~UVDARLedDetectAdaptive();
 
     bool processImageAdaptive(const cv::Mat& inputImage, const std::vector<cv::Point>& trackingPoints, std::vector<cv::Point>& detectedPoints,
@@ -88,9 +89,14 @@ namespace uvdar
     double point_similarity_threshold_;
     std::string adaptive_method_;
     bool adaptive_debug_;
-    int contours_size_limit_; 
-    int contour_max_size_limit_; 
-    int roi_detected_points_limit_; 
+    int contours_size_limit_;
+    int contour_max_size_limit_;
+    int roi_detected_points_limit_;
+    double sigmaX_;
+    double sigmaY_;
+    double grayscale_ROI_weight_;
+    double sharped_ROI_weight_;
+
     int roiIndex_;
     int MAX_SIZE = 50;
     int MIN_SIZE = 5;

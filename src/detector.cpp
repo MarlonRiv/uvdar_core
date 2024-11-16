@@ -58,6 +58,10 @@ public:
     param_loader.loadParam("contour_size_limit",_contours_size_limit_, 4);
     param_loader.loadParam("contour_max_size_limit",_contour_max_size_limit_, 15);
     param_loader.loadParam("roi_detected_points_limit",_roi_detected_points_limit_, 5);
+    param_loader.loadParam("sigma_x",_sigma_x_, 6.0);
+    param_loader.loadParam("sigma_y",_sigma_y_, 6.0);
+    param_loader.loadParam("grayscale_roi_weight",_grayscale_roi_weight_, 0.25);
+    param_loader.loadParam("sharped_roi_weight",_sharped_roi_weight_, 1.75);
 
 
     //Print adaptive threshold
@@ -148,7 +152,11 @@ public:
               _adaptive_debug_,
               _contours_size_limit_,
               _contour_max_size_limit_,
-              _roi_detected_points_limit_
+              _roi_detected_points_limit_,
+              _sigma_x_,
+              _sigma_y_,
+              _grayscale_roi_weight_,
+              _sharped_roi_weight_
               ));
         if (!uvda_.back()){
           ROS_ERROR("[UVDARDetector]: Failed to initialize ADAPTIVE-based marker detection!");
@@ -776,6 +784,10 @@ private:
   int _contours_size_limit_;
   int _contour_max_size_limit_;
   int _roi_detected_points_limit_;
+  double _sigma_x_;
+  double _sigma_y_;
+  double _grayscale_roi_weight_;
+  double _sharped_roi_weight_;
 
   double _initial_delay_ = 5.0;
 

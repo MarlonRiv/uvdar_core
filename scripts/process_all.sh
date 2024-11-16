@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Directories
-raw_csv_dir=~/Desktop/MRS_Master_Project/paper/adaptive_raw_csv
+raw_csv_dir=~/Desktop/MRS_Master_Project/paper/adaptive_variant02_raw_csv
 processed_csv_dir=~/Desktop/MRS_Master_Project/paper/processed_csv_automation_adaptive
 
 # Make sure the processed_csv directory exists

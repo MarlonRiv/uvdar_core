@@ -19,6 +19,10 @@
   <arg name="contour_size_limit" default="4"/>
   <arg name="contour_max_size_limit" default="15"/>
   <arg name="roi_detected_points_limit" default="5"/>
+  <arg name="sigma_x" default="6.0"/>
+  <arg name="sigma_y" default="6.0"/>
+  <arg name="grayscale_roi_weight" default="0.25"/>
+  <arg name="sharped_roi_weight" default="1.75"/>
  
   <!-- Blink processor settings: -->
   <arg name="blink_process_rate" default="10"/>
@@ -134,16 +138,20 @@
       <!-- <param name="gui"             type="bool" value="true"/> -->
       <param name="gui"             type="bool" value="false"/>
       <!-- <param name="publish_visualization"             type="bool" value="true"/> -->
-      <param name="publish_visualization"             type="bool" value="false"/>
+      <param name="publish_visualization"             type="bool" value="true"/>
       <param name="publish"         type="bool" value="$(arg publish)"/>
       <param name="justReport" type="bool" value="true"/>
       <param name="threshold" type="int" value="$(arg threshold)"/>
       <param name="adaptive_threshold" type="bool" value="true"/>
       <param name="adaptive_method" type="string" value="otsu"/>
-      <param name="adaptive_debug" type="bool" value="false"/>
+      <param name="adaptive_debug" type="bool" value="true"/>
       <param name="contour_size_limit" type="int" value="$(arg contour_size_limit)"/>
       <param name="contour_max_size_limit" type="int" value="$(arg contour_max_size_limit)"/>
       <param name="roi_detected_points_limit" type="int" value="$(arg roi_detected_points_limit)"/>
+      <param name="sigma_x" type="double" value="$(arg sigma_x)"/>
+      <param name="sigma_y" type="double" value="$(arg sigma_y)"/>
+      <param name="grayscale_roi_weight" type="double" value="$(arg grayscale_roi_weight)"/>
+      <param name="sharped_roi_weight" type="double" value="$(arg sharped_roi_weight)"/>
 
       <!-- <rosparam param="camera_topics"> ["uav6/uvdar_bluefox/left/image_raw"] </rosparam> -->
       <rosparam param="camera_topics"> ["camera_left"] </rosparam>
