@@ -6,24 +6,26 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # # Define the file paths and thresholds
-# file_paths = [
-#     '/home/rivermar/Desktop/MRS_Master_Project/paper/processed_csv_automation_adaptive/variant01_adaptive_otsu_invalid_processed.csv',
-#     '/home/rivermar/Desktop/MRS_Master_Project/paper/processed_csv_automation_adaptive/variant01_adaptive_otsu_valid_processed.csv',
-#     '/home/rivermar/Desktop/MRS_Master_Project/paper/processed_csv_automation_adaptive/variant01_adaptive_otsu_valid_c4_d5_mxs50_processed.csv',
-#     '/home/rivermar/Desktop/MRS_Master_Project/paper/processed_csv_automation_adaptive/variant01_adaptive_otsu_c4_d4_mxs15_processed.csv',
-#     '/home/rivermar/Desktop/MRS_Master_Project/paper/processed_csv_automation_adaptive/variant01_adaptive_otsu_c4_d5_mxs15_processed.csv',
-#     '/home/rivermar/Desktop/MRS_Master_Project/paper/processed_csv_automation_adaptive/variant01_adaptive_otsu_c5_d5_mxs15_processed.csv',
-#     '/home/rivermar/Desktop/MRS_Master_Project/paper/processed_csv_automation_adaptive/variant01_adaptive_otsu_processed.csv',
-#     '/home/rivermar/Desktop/MRS_Master_Project/paper/processed_csv_automation_adaptive/variant01_adaptive_kl_processed.csv',
-#     '/home/rivermar/Desktop/MRS_Master_Project/paper/processed_csv_automation_adaptive/variant01_adaptive_otsu_c4_d5_mxs15_invalids_processed.csv',
-#     '/home/rivermar/Desktop/MRS_Master_Project/paper/processed_csv_automation_adaptive/variant01_adaptive_otsu_valid_standard_4_15_5_processed.csv',
-#     '/home/rivermar/Desktop/MRS_Master_Project/paper/processed_csv_automation_adaptive/variant01_adaptive_otsu_sanity_check_processed.csv',
-#     '/home/rivermar/Desktop/MRS_Master_Project/paper/processed_csv_automation_adaptive/variant01_otsu_valid_4_5_15_no_merging_processed.csv',
-# ]
-#adaptive variant02
 file_paths = [
-    '/home/rivermar/Desktop/MRS_Master_Project/paper/processed_csv_automation_adaptive/variant02_adaptive_otsu_first_processed.csv',
- ]
+    '/home/rivermar/Desktop/MRS_Master_Project/paper/processed_csv_automation_adaptive/variant01_adaptive_otsu_invalid_processed.csv',
+    '/home/rivermar/Desktop/MRS_Master_Project/paper/processed_csv_automation_adaptive/variant01_adaptive_otsu_valid_processed.csv',
+    '/home/rivermar/Desktop/MRS_Master_Project/paper/processed_csv_automation_adaptive/variant01_adaptive_otsu_valid_c4_d5_mxs50_processed.csv',
+    '/home/rivermar/Desktop/MRS_Master_Project/paper/processed_csv_automation_adaptive/variant01_adaptive_otsu_c4_d4_mxs15_processed.csv',
+    '/home/rivermar/Desktop/MRS_Master_Project/paper/processed_csv_automation_adaptive/variant01_adaptive_otsu_c4_d5_mxs15_processed.csv',
+    '/home/rivermar/Desktop/MRS_Master_Project/paper/processed_csv_automation_adaptive/variant01_adaptive_otsu_c5_d5_mxs15_processed.csv',
+    '/home/rivermar/Desktop/MRS_Master_Project/paper/processed_csv_automation_adaptive/variant01_adaptive_otsu_processed.csv',
+    '/home/rivermar/Desktop/MRS_Master_Project/paper/processed_csv_automation_adaptive/variant01_adaptive_kl_processed.csv',
+    '/home/rivermar/Desktop/MRS_Master_Project/paper/processed_csv_automation_adaptive/variant01_adaptive_otsu_c4_d5_mxs15_invalids_processed.csv',
+    '/home/rivermar/Desktop/MRS_Master_Project/paper/processed_csv_automation_adaptive/variant01_adaptive_otsu_valid_standard_4_15_5_processed.csv',
+    '/home/rivermar/Desktop/MRS_Master_Project/paper/processed_csv_automation_adaptive/variant01_adaptive_otsu_sanity_check_processed.csv',
+    '/home/rivermar/Desktop/MRS_Master_Project/paper/processed_csv_automation_adaptive/variant01_otsu_valid_4_5_15_no_merging_processed.csv',
+    '/home/rivermar/Desktop/MRS_Master_Project/paper/processed_csv_automation_adaptive/variant01_adaptive_otsu_outlier_rejection_v1_processed.csv',
+    '/home/rivermar/Desktop/MRS_Master_Project/paper/processed_csv_automation_adaptive/variant01_adaptive_otsu_outlier_rejection_v1_2024_processed.csv',
+]
+#adaptive variant02
+# file_paths = [
+#     # '/home/rivermar/Desktop/MRS_Master_Project/paper/processed_csv_automation_adaptive/variant02_adaptive_otsu_first_processed.csv',
+#  ]
 #Variant01
 # # Define the file paths and thresholds
 # file_paths = [
@@ -62,8 +64,8 @@ file_paths = [
 
 
 thresholds = [40, 60, 80, 100, 120, 160, 200]
-# keys = ['invalid', 'valid', 'valid_4_5_50', 'valid_4_4_15', 'valid_4_5_15', 'valid_5_5_,15','otsu', 'kl','valid_4_5_15_invalids', 'valid_and_standards_4_5_15', 'consistency_check', 'no-merging']
-keys = ['first_variant02']
+keys = ['invalid', 'valid', 'valid_4_5_50', 'valid_4_4_15', 'valid_4_5_15', 'valid_5_5_,15','otsu', 'kl','valid_4_5_15_invalids', 'valid_and_standards_4_5_15', 'consistency_check', 'no-merging', 'outlier_rej_2025','outlier_rej_2024']
+# keys = ['first_variant02']
 
 # Initialize a dataframe to hold the summarized data
 summary_data = {
@@ -157,7 +159,7 @@ optimal_max_threshold = df_summary.loc[df_summary['Max Error Rate'].idxmin(), 'K
 # optimal_max_threshold = df_summary.loc[df_summary['Max Error Rate'].idxmin(), 'Threshold']
 
 # Save the summary to a CSV file
-df_summary.to_csv('threshold_analysis_summary_adaptive.csv', index=False)
+df_summary.to_csv('threshold_analysis_summary_adaptive_2025.csv', index=False)
 
 # Output the optimal thresholds
 print(f'Optimal Threshold based on Combined Error Rate: {optimal_combined_threshold}')

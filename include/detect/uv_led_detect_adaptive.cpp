@@ -160,17 +160,70 @@ namespace uvdar
       grayImage = inputImage(roi).clone();
     }
 
-    // Apply Gaussian blur to the ROI
-    cv::Mat blurred;
-    cv::GaussianBlur(grayImage, blurred, cv::Size(0, 0), sigmaX_, sigmaY_);
+    /* // Apply Gaussian blur to the ROI */
+    cv::Mat lowFrequency;
+    /* cv::bilateralFilter(grayImage, blurred, 9, 75, 75); */
+    cv::GaussianBlur(grayImage, lowFrequency, cv::Size(0, 0), sigmaX_, sigmaY_);
+
+    cv::Mat highPass;
+
+    cv::subtract (grayImage, lowFrequency, highPass);
+
+
+    cv::medianBlur(highPass, highPass, 3); // 3x3 median filter
 
     // Create unsharp mask by subtracting the blurred version from the original image
-    cv::Mat unsharpMask = grayImage - blurred;
+    /* cv::Mat unsharpMask = grayImage - blurred; */
 
     // Apply the unsharp mask to the original image to enhance edges
     cv::Mat enhancedImage;
-    cv::addWeighted(grayImage, grayscale_ROI_weight_, unsharpMask, sharped_ROI_weight_, 0, enhancedImage);
 
+    cv::addWeighted(grayImage, grayscale_ROI_weight_, highPass, sharped_ROI_weight_, 0, enhancedImage);
+
+    cv::Mat postDenoised;
+    // A small kernel (e.g., 3x3) can clean up artifacts without over-smoothing.
+    cv::medianBlur(enhancedImage, postDenoised, 3);
+
+    cv::Point point;
+    point.x = roi.x;
+    point.y = roi.y;
+    saveRoiImage(postDenoised, point, index_, 0, 0);
+    index_++;
+
+    /* top-hat attempt //{ */
+    
+    // Define the structuring element
+    // Adjust the size (e.g., 15x15) based on the expected size of your bright feature
+
+    /* cv::medianBlur(grayImage, grayImage, 3);  // 3x3 median filter */
+    /* int kernelSize = 10; */
+    /* cv::Mat structElem = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(kernelSize, kernelSize)); */
+
+    /* // Apply the white top-hat transform */
+    /* cv::Mat topHat; */
+    /* cv::morphologyEx(grayImage, topHat, cv::MORPH_TOPHAT, structElem); */
+
+
+    /* cv::medianBlur(topHat, topHat, 3);  // 3x3 median filter */
+
+    /* double minVal, maxVal; */
+    /* cv::minMaxLoc(topHat, &minVal, &maxVal); */
+    /* cv::Mat contrastStretched; */
+    /* topHat.convertTo(contrastStretched, CV_8UC1, 255.0 / (maxVal - minVal), -minVal * 255.0 / (maxVal - minVal)); */
+
+    /* cv::Mat normalizedEnhanced; */
+    /* cv::normalize(contrastStretched, normalizedEnhanced, 0, 255, cv::NORM_MINMAX); */
+
+    /* cv::Point point; */
+    /* point.x = roi.x; */
+    /* point.y = roi.y; */
+    /* saveRoiImage(normalizedEnhanced, point, index_, 0, 0); */
+    /* index_++; */
+    /* cv::Mat enhancedImage = contrastStretched; */
+
+    
+    //}
+    
     // BinaryRoi to save after applying the threshold
     cv::Mat binaryRoi;
 
@@ -178,10 +231,20 @@ namespace uvdar
     if (adaptive_method_ == "Otsu" || adaptive_method_ == "otsu")
     {
       // Apply Otsu's thresholding with the enhanced ROI
-      double thresholdValue = cv::threshold(enhancedImage, binaryRoi, 0, 255, cv::THRESH_BINARY | cv::THRESH_OTSU);  // Apply Otsu's thresholding
+      double thresholdValue = cv::threshold(postDenoised, binaryRoi, 0, 255, cv::THRESH_BINARY | cv::THRESH_OTSU);  // Apply Otsu's thresholding
       thresholdValue_ = thresholdValue;
       // Apply Otsu's thresholding with the original ROI
       /* int thresholdValueOriginal = cv::threshold(grayImage, binaryRoiOriginal, 0, 255, cv::THRESH_BINARY | cv::THRESH_OTSU); // Apply Otsu's thresholding */
+
+      if (thresholdValue < 10)
+      {
+
+        double new_threshold = thresholdValue * 10;
+        std::cout << "[UVDARLedDetectAdaptive]: OUTLIER THRESHOLD: " << thresholdValue << std::endl;
+        cv::threshold(enhancedImage, binaryRoi, new_threshold, 255, cv::THRESH_BINARY);
+        thresholdValue_ = new_threshold;
+      }
+
     } else
     {
       // std::cout << "[UVDARLedDetectAdaptive]: APPLYING KL DIVERGENCE" << std::endl;
@@ -307,6 +370,14 @@ namespace uvdar
       return roiDetectedPoints;
     }
   }
+  //}
+
+  /* updateThreshold() //{ */
+
+  double updateThreshold(double observed_threshold)
+  {
+  }
+
   //}
 
   /* adjustROI() //{ */

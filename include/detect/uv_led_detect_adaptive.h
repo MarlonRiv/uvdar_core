@@ -112,6 +112,10 @@ namespace uvdar
     std::vector<float> klDivergences_;
     std::vector<int> validRois_;
     int index_ = 0;  // index to label saved pictures
+
+
+    std::vector<double> threshold_history_array_;
+
   };
 
 }  // namespace uvdar
