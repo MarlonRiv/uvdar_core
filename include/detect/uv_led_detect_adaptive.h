@@ -80,7 +80,7 @@ namespace uvdar
     std::tuple<int, double> findOptimalThresholdUsingEntropy(const cv::Mat& roiImage);
 
     cv::Mat plotHistogram(const cv::Mat& image);
-    void saveRoiImage(const cv::Mat& binaryRoi, const cv::Point& center, int index, int thresholdValue, double klDivergence);
+    void saveRoiImage(const cv::Mat& binaryRoi, const std::string& name, int index); 
 
     int neighborhoodSize_;
     double thresholdValue_;

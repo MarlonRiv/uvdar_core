@@ -160,6 +160,9 @@ namespace uvdar
       grayImage = inputImage(roi).clone();
     }
 
+
+    saveRoiImage(grayImage, "grayImage", index_);
+
     /* // Apply Gaussian blur to the ROI */
     cv::Mat lowFrequency;
     /* cv::bilateralFilter(grayImage, blurred, 9, 75, 75); */
@@ -167,10 +170,10 @@ namespace uvdar
 
     cv::Mat highPass;
 
-    cv::subtract (grayImage, lowFrequency, highPass);
+    cv::subtract(grayImage, lowFrequency, highPass);
 
 
-    cv::medianBlur(highPass, highPass, 3); // 3x3 median filter
+    cv::medianBlur(highPass, highPass, 3);  // 3x3 median filter
 
     // Create unsharp mask by subtracting the blurred version from the original image
     /* cv::Mat unsharpMask = grayImage - blurred; */
@@ -187,11 +190,63 @@ namespace uvdar
     cv::Point point;
     point.x = roi.x;
     point.y = roi.y;
-    saveRoiImage(postDenoised, point, index_, 0, 0);
-    index_++;
+    saveRoiImage(postDenoised, "enhancedImage", index_);
+
+    double minVal, maxVal;
+    cv::minMaxLoc(grayImage, &minVal, &maxVal);
+    if (maxVal < 40)
+    {
+      std::cout << "[UVDARLedDetectAdaptive]: maxVal under :" << std::to_string(maxVal) << std::endl;
+      // Create a mask to draw the filtered contours */
+         cv::Mat mask = cv::Mat::zeros(roi.size(), CV_8UC1); 
+
+         lastProcessedROIs_.push_back(roi);  // Store the ROI for visualization */
+         // Store the binary ROI (For debugging/visualization) */
+         lastProcessedBinaryROIs_.push_back(mask); 
+
+       // Return empty roiDetectedPoints */
+         std::vector<cv::Point> empty_roiDetectedPoints = {}; 
+         thresholdValues_.push_back(0.0); 
+         klDivergences_.push_back(0.0); 
+         numberDetectedPoints_.push_back(0); 
+         validRois_.push_back(0); 
+         return empty_roiDetectedPoints; 
+
+    } else
+    {
+      std::cout << "[UVDARLedDetectAdaptive]: maxVal :" << std::to_string(maxVal) << std::endl;
+    }
+
+    /* // Find contours in the binary ROI */
+    /* std::vector<std::vector<cv::Point>> contoursBeforeBinarization; */
+    /* cv::findContours(postDenoised, contoursBeforeBinarization, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE); */
+
+    /* std::cout << "[UVDARLedDetectAdaptive]: postDenoised contour size: " << contoursBeforeBinarization.size() << std::endl; */
+
+    /* if (static_cast<int>(contoursBeforeBinarization.size()) == 0) */
+    /* { */
+    /*   if (adaptive_debug_) */
+    /*   { */
+    /*     std::cout << "[UVDARLedDetectAdaptive]: NUMBER OF CONTOURS OUTSIDE OF THE LIMIT: " << contoursBeforeBinarization.size() << std::endl; */
+    /*   } */
+    /*   // Create a mask to draw the filtered contours */
+    /*   cv::Mat mask = cv::Mat::zeros(roi.size(), CV_8UC1); */
+
+    /*   lastProcessedROIs_.push_back(roi);  // Store the ROI for visualization */
+    /*   // Store the binary ROI (For debugging/visualization) */
+    /*   lastProcessedBinaryROIs_.push_back(mask); */
+
+    /*   // Return empty roiDetectedPoints */
+    /*   std::vector<cv::Point> empty_roiDetectedPoints = {}; */
+    /*   thresholdValues_.push_back(0.0); */
+    /*   klDivergences_.push_back(0.0); */
+    /*   numberDetectedPoints_.push_back(0); */
+    /*   validRois_.push_back(0); */
+    /*   return empty_roiDetectedPoints; */
+    /* } */
 
     /* top-hat attempt //{ */
-    
+
     // Define the structuring element
     // Adjust the size (e.g., 15x15) based on the expected size of your bright feature
 
@@ -221,9 +276,9 @@ namespace uvdar
     /* index_++; */
     /* cv::Mat enhancedImage = contrastStretched; */
 
-    
+
     //}
-    
+
     // BinaryRoi to save after applying the threshold
     cv::Mat binaryRoi;
 
@@ -243,7 +298,14 @@ namespace uvdar
         std::cout << "[UVDARLedDetectAdaptive]: OUTLIER THRESHOLD: " << thresholdValue << std::endl;
         cv::threshold(enhancedImage, binaryRoi, new_threshold, 255, cv::THRESH_BINARY);
         thresholdValue_ = new_threshold;
+
+        saveRoiImage(binaryRoi, "binarizedImage_outlier", index_);
+      } else
+      {
+
+        saveRoiImage(binaryRoi, "binarizedImage", index_);
       }
+      index_++;
 
     } else
     {
@@ -261,8 +323,6 @@ namespace uvdar
     cv::Mat mask = cv::Mat::zeros(binaryRoi.size(), CV_8UC1);
 
     lastProcessedROIs_.push_back(roi);  // Store the ROI for visualization
-    // Store the binary ROI (For debugging/visualization)
-    lastProcessedBinaryROIs_.push_back(binaryRoi);
 
     if (adaptive_debug_)
     {
@@ -277,6 +337,8 @@ namespace uvdar
       {
         std::cout << "[UVDARLedDetectAdaptive]: NUMBER OF CONTOURS OUTSIDE OF THE LIMIT: " << contours.size() << std::endl;
       }
+
+      lastProcessedBinaryROIs_.push_back(mask);
       // Return empty roiDetectedPoints
       std::vector<cv::Point> empty_roiDetectedPoints = {};
       thresholdValues_.push_back(thresholdValue_);
@@ -285,6 +347,8 @@ namespace uvdar
       validRois_.push_back(0);
       return empty_roiDetectedPoints;
     }
+
+    lastProcessedBinaryROIs_.push_back(binaryRoi);
 
     // TODO find proper value for MAX_AREA
     /* int MAX_AREA = 15; */
@@ -860,7 +924,7 @@ namespace uvdar
   /* saveRoiImage() //{ */
 
 
-  void UVDARLedDetectAdaptive::saveRoiImage(const cv::Mat& binaryRoi, const cv::Point& center, int index, int thresholdValue = 0, double minKLDivergence = 0.0)
+  void UVDARLedDetectAdaptive::saveRoiImage(const cv::Mat& binaryRoi, const std::string& name, int index)
   {
     /**
      * @brief: This function saves the binary ROI as an image
@@ -880,13 +944,12 @@ namespace uvdar
     // Ensure the output directory exists
     fs::create_directories(outputDir);
 
-    // Convert minKLDivergence to string with fixed decimal places
-    std::stringstream minKLDivStream;
-    minKLDivStream << std::fixed << std::setprecision(2) << minKLDivergence;  // Adjust precision as needed
+    /* // Convert minKLDivergence to string with fixed decimal places */
+    /* std::stringstream minKLDivStream; */
+    /* minKLDivStream << std::fixed << std::setprecision(2) << minKLDivergence;  // Adjust precision as needed */
 
     // Format the filename
-    std::string filename = "roi_" + std::to_string(center.x) + "_" + std::to_string(center.y) + "_" + std::to_string(index) + "_"
-                           + std::to_string(thresholdValue) + "_" + minKLDivStream.str() + ".png";
+    std::string filename = "roi_" + name + "_" + std::to_string(index) + "_" + ".png";
     std::string fullPath = fs::path(outputDir) / filename;
 
     // Save the image

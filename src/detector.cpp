@@ -55,6 +55,7 @@ public:
     param_loader.loadParam("adaptive_threshold",_adaptive_threshold_,bool(false));
     param_loader.loadParam("adaptive_method",_adaptive_method_,std::string("Otsu"));
     param_loader.loadParam("adaptive_debug",_adaptive_debug_,bool(false));
+    param_loader.loadParam("roi_size",_roi_size_,20);
     param_loader.loadParam("contour_size_limit",_contours_size_limit_, 4);
     param_loader.loadParam("contour_max_size_limit",_contour_max_size_limit_, 15);
     param_loader.loadParam("roi_detected_points_limit",_roi_detected_points_limit_, 5);
@@ -146,7 +147,7 @@ public:
 
         ROS_INFO("[UVDARDetector]: Initializing ADAPTIVE-based marker detection...");
         uvda_.push_back(std::make_unique<UVDARLedDetectAdaptive>(
-              20,
+              _roi_size_,
               5.0,
               _adaptive_method_,
               _adaptive_debug_,
@@ -781,6 +782,7 @@ private:
   bool _adaptive_threshold_;
   std::string _adaptive_method_;
   bool _adaptive_debug_;
+  int _roi_size_;
   int _contours_size_limit_;
   int _contour_max_size_limit_;
   int _roi_detected_points_limit_;
