@@ -20,7 +20,7 @@ windows:
       layout: even-vertical
       panes:
         # - waitForOffBoard; rosbag record -O ~/Desktop/MRS_Master_Project/rosbags/good_sequence/diff_power_18m_th150_topics.bag /uav7/uvdar_bluefox/left/image_raw /uav7/uvdar/points_seen_left /uav7/uvdar/blinkers_seen_back /uav7/uvdar/ami_all_seq_info_back 
-        # - waitForRos; waitForOffBoard; ./record.sh 
+        - waitForRos; waitForOffBoard; ./record.sh 
         #- rosbag record -O rosbags/first/omta_38.bag -e "(.*)_camp"
         # - rosbag record -O rosbags/first/omta_39.bag -e "(.*)_camp"
         # - rosbag record -O rosbags/first/4dht_38.bag -e "(.*)_camp"

@@ -377,7 +377,7 @@ private:
         }
       }
 
-      ROS_INFO_STREAM("[UVDARDetector]: Camera " << image_index << " Tracking points: " << trackingPointsPerCamera_[image_index].size());
+      /* ROS_INFO_STREAM("[UVDARDetector]: Camera " << image_index << " Tracking points: " << trackingPointsPerCamera_[image_index].size()); */
 
   }
   //}
@@ -469,12 +469,12 @@ private:
 
     /* ROS_INFO_STREAM("[UVDARDetector]: Publishing adaptive points. In camera: " << image_index); */
 
-    if (!adaptive_detected_points.empty()) {      
-      //Current camera
-      ROS_INFO_STREAM("[UVDARDetector]: Detected adaptive points in camera " << image_index << ": " << adaptive_detected_points.size());
-    } else {
-      ROS_INFO_STREAM("[UVDARDetector]: No detected adaptive points. In camera: " << image_index);
-    }
+    /* if (!adaptive_detected_points.empty()) { */      
+    /*   //Current camera */
+    /*   ROS_INFO_STREAM("[UVDARDetector]: Detected adaptive points in camera " << image_index << ": " << adaptive_detected_points.size()); */
+    /* } else { */
+    /*   ROS_INFO_STREAM("[UVDARDetector]: No detected adaptive points. In camera: " << image_index); */
+    /* } */
     uvdar_core::ImagePointsWithFloatStamped msg_detected;
     msg_detected.stamp = image->header.stamp;
     msg_detected.image_width = image->image.cols;
@@ -566,7 +566,7 @@ private:
 
       if( _adaptive_threshold_ && trackingPointsPerCamera_[image_index].size() > 0){
       
-      ROS_INFO_STREAM("[UVDARDetector]: Tracking points per camera: " << trackingPointsPerCamera_[image_index].size()); 
+      /* ROS_INFO_STREAM("[UVDARDetector]: Tracking points per camera: " << trackingPointsPerCamera_[image_index].size()); */ 
 
       
       /* { */
@@ -593,7 +593,7 @@ private:
       else{
 
        adaptive_detected_points_[image_index].clear(); 
-       ROS_INFO_STREAM("[UVDARDetector]: Processing with standard detection " << image_index);
+       /* ROS_INFO_STREAM("[UVDARDetector]: Processing with standard detection " << image_index); */
 
        /* ROS_INFO_STREAM("[UVDARDetector]: Locking cam image mutex " << image_index << "..."); */
        /* std::scoped_lock lock(*mutex_camera_image_[image_index]); */

@@ -160,91 +160,54 @@ namespace uvdar
       grayImage = inputImage(roi).clone();
     }
 
-
-    saveRoiImage(grayImage, "grayImage", index_);
-
+    /* saveRoiImage(grayImage, "grayImage", index_); */
     /* // Apply Gaussian blur to the ROI */
     cv::Mat lowFrequency;
     /* cv::bilateralFilter(grayImage, blurred, 9, 75, 75); */
     cv::GaussianBlur(grayImage, lowFrequency, cv::Size(0, 0), sigmaX_, sigmaY_);
-
     cv::Mat highPass;
-
     cv::subtract(grayImage, lowFrequency, highPass);
 
-
-    cv::medianBlur(highPass, highPass, 3);  // 3x3 median filter
-
-    // Create unsharp mask by subtracting the blurred version from the original image
-    /* cv::Mat unsharpMask = grayImage - blurred; */
-
-    // Apply the unsharp mask to the original image to enhance edges
-    cv::Mat enhancedImage;
-
-    cv::addWeighted(grayImage, grayscale_ROI_weight_, highPass, sharped_ROI_weight_, 0, enhancedImage);
-
-    cv::Mat postDenoised;
-    // A small kernel (e.g., 3x3) can clean up artifacts without over-smoothing.
-    cv::medianBlur(enhancedImage, postDenoised, 3);
-
-    cv::Point point;
-    point.x = roi.x;
-    point.y = roi.y;
-    saveRoiImage(postDenoised, "enhancedImage", index_);
-
+    /* minMax //{ */
+    
     double minVal, maxVal;
     cv::minMaxLoc(grayImage, &minVal, &maxVal);
     if (maxVal < 40)
     {
-      std::cout << "[UVDARLedDetectAdaptive]: maxVal under :" << std::to_string(maxVal) << std::endl;
+      /* std::cout << "[UVDARLedDetectAdaptive]: maxVal under :" << std::to_string(maxVal) << std::endl; */
       // Create a mask to draw the filtered contours */
-         cv::Mat mask = cv::Mat::zeros(roi.size(), CV_8UC1); 
+      cv::Mat mask = cv::Mat::zeros(roi.size(), CV_8UC1);
 
-         lastProcessedROIs_.push_back(roi);  // Store the ROI for visualization */
-         // Store the binary ROI (For debugging/visualization) */
-         lastProcessedBinaryROIs_.push_back(mask); 
+      lastProcessedROIs_.push_back(roi);  // Store the ROI for visualization */
+      // Store the binary ROI (For debugging/visualization) */
+      lastProcessedBinaryROIs_.push_back(mask);
 
-       // Return empty roiDetectedPoints */
-         std::vector<cv::Point> empty_roiDetectedPoints = {}; 
-         thresholdValues_.push_back(0.0); 
-         klDivergences_.push_back(0.0); 
-         numberDetectedPoints_.push_back(0); 
-         validRois_.push_back(0); 
-         return empty_roiDetectedPoints; 
+      // Return empty roiDetectedPoints */
+      std::vector<cv::Point> empty_roiDetectedPoints = {};
+      thresholdValues_.push_back(0.0);
+      klDivergences_.push_back(0.0);
+      numberDetectedPoints_.push_back(0);
+      validRois_.push_back(0);
+      return empty_roiDetectedPoints;
 
     } else
     {
-      std::cout << "[UVDARLedDetectAdaptive]: maxVal :" << std::to_string(maxVal) << std::endl;
+      /* std::cout << "[UVDARLedDetectAdaptive]: maxVal :" << std::to_string(maxVal) << std::endl; */
     }
+    
+    //}
 
-    /* // Find contours in the binary ROI */
-    /* std::vector<std::vector<cv::Point>> contoursBeforeBinarization; */
-    /* cv::findContours(postDenoised, contoursBeforeBinarization, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE); */
+    /* cv::medianBlur(highPass, highPass, 3);  // 3x3 median filter */
+    // Create unsharp mask by subtracting the blurred version from the original image
+    /* cv::Mat unsharpMask = grayImage - blurred; */
+    // Apply the unsharp mask to the original image to enhance edges
+    cv::Mat enhancedImage;
+    cv::addWeighted(grayImage, grayscale_ROI_weight_, highPass, sharped_ROI_weight_, 0, enhancedImage);
+    // A small kernel (e.g., 3x3) can clean up artifacts without over-smoothing.
+    cv::medianBlur(enhancedImage, enhancedImage, 3);
 
-    /* std::cout << "[UVDARLedDetectAdaptive]: postDenoised contour size: " << contoursBeforeBinarization.size() << std::endl; */
-
-    /* if (static_cast<int>(contoursBeforeBinarization.size()) == 0) */
-    /* { */
-    /*   if (adaptive_debug_) */
-    /*   { */
-    /*     std::cout << "[UVDARLedDetectAdaptive]: NUMBER OF CONTOURS OUTSIDE OF THE LIMIT: " << contoursBeforeBinarization.size() << std::endl; */
-    /*   } */
-    /*   // Create a mask to draw the filtered contours */
-    /*   cv::Mat mask = cv::Mat::zeros(roi.size(), CV_8UC1); */
-
-    /*   lastProcessedROIs_.push_back(roi);  // Store the ROI for visualization */
-    /*   // Store the binary ROI (For debugging/visualization) */
-    /*   lastProcessedBinaryROIs_.push_back(mask); */
-
-    /*   // Return empty roiDetectedPoints */
-    /*   std::vector<cv::Point> empty_roiDetectedPoints = {}; */
-    /*   thresholdValues_.push_back(0.0); */
-    /*   klDivergences_.push_back(0.0); */
-    /*   numberDetectedPoints_.push_back(0); */
-    /*   validRois_.push_back(0); */
-    /*   return empty_roiDetectedPoints; */
-    /* } */
-
+    /* saveRoiImage(postDenoised, "enhancedImage", index_); */
+    
     /* top-hat attempt //{ */
 
     // Define the structuring element
@@ -276,7 +239,6 @@ namespace uvdar
     /* index_++; */
     /* cv::Mat enhancedImage = contrastStretched; */
 
-
     //}
 
     // BinaryRoi to save after applying the threshold
@@ -286,27 +248,31 @@ namespace uvdar
     if (adaptive_method_ == "Otsu" || adaptive_method_ == "otsu")
     {
       // Apply Otsu's thresholding with the enhanced ROI
-      double thresholdValue = cv::threshold(postDenoised, binaryRoi, 0, 255, cv::THRESH_BINARY | cv::THRESH_OTSU);  // Apply Otsu's thresholding
+      double thresholdValue = cv::threshold(enhancedImage, binaryRoi, 0, 255, cv::THRESH_BINARY | cv::THRESH_OTSU);  // Apply Otsu's thresholding
       thresholdValue_ = thresholdValue;
       // Apply Otsu's thresholding with the original ROI
       /* int thresholdValueOriginal = cv::threshold(grayImage, binaryRoiOriginal, 0, 255, cv::THRESH_BINARY | cv::THRESH_OTSU); // Apply Otsu's thresholding */
 
-      if (thresholdValue < 10)
-      {
+      /* /1* outlier threshold //{ *1/ */
+      
+      /* if (thresholdValue < 10) */
+      /* { */
 
-        double new_threshold = thresholdValue * 10;
-        std::cout << "[UVDARLedDetectAdaptive]: OUTLIER THRESHOLD: " << thresholdValue << std::endl;
-        cv::threshold(enhancedImage, binaryRoi, new_threshold, 255, cv::THRESH_BINARY);
-        thresholdValue_ = new_threshold;
+      /*   double new_threshold = thresholdValue * 10; */
+      /*   std::cout << "[UVDARLedDetectAdaptive]: OUTLIER THRESHOLD: " << thresholdValue << std::endl; */
+      /*   cv::threshold(enhancedImage, binaryRoi, new_threshold, 255, cv::THRESH_BINARY); */
+      /*   thresholdValue_ = new_threshold; */
 
-        saveRoiImage(binaryRoi, "binarizedImage_outlier", index_);
-      } else
-      {
+      /*   saveRoiImage(binaryRoi, "binarizedImage_outlier", index_); */
+      /* } else */
+      /* { */
 
-        saveRoiImage(binaryRoi, "binarizedImage", index_);
-      }
-      index_++;
+      /*   saveRoiImage(binaryRoi, "binarizedImage", index_); */
+      /* } */
+      
+      /* //} */
 
+      /* saveRoiImage(binaryRoi, "binarizedImage", index_); */
     } else
     {
       // std::cout << "[UVDARLedDetectAdaptive]: APPLYING KL DIVERGENCE" << std::endl;
@@ -323,58 +289,77 @@ namespace uvdar
     cv::Mat mask = cv::Mat::zeros(binaryRoi.size(), CV_8UC1);
 
     lastProcessedROIs_.push_back(roi);  // Store the ROI for visualization
-
-    if (adaptive_debug_)
-    {
-      // Print the contours size
-      std::cout << "[UVDARLedDetectAdaptive]: NUMBER OF CONTOURS: " << contours.size() << std::endl;
-    }
-
-    // TODO find proper value for noisy ROI
-    if (static_cast<int>(contours.size()) >= contours_size_limit_)
-    {
-      if (adaptive_debug_)
-      {
-        std::cout << "[UVDARLedDetectAdaptive]: NUMBER OF CONTOURS OUTSIDE OF THE LIMIT: " << contours.size() << std::endl;
-      }
-
-      lastProcessedBinaryROIs_.push_back(mask);
-      // Return empty roiDetectedPoints
-      std::vector<cv::Point> empty_roiDetectedPoints = {};
-      thresholdValues_.push_back(thresholdValue_);
-      klDivergences_.push_back(0.0);
-      numberDetectedPoints_.push_back(0);
-      validRois_.push_back(0);
-      return empty_roiDetectedPoints;
-    }
-
     lastProcessedBinaryROIs_.push_back(binaryRoi);
+
+    /* possible to delete filter based on area //{ */
+    
+    /* if (adaptive_debug_) */
+    /* { */
+    /*   // Print the contours size */
+    /*   std::cout << "[UVDARLedDetectAdaptive]: NUMBER OF CONTOURS: " << contours.size() << std::endl; */
+    /* } */
+
+    /* // TODO find proper value for noisy ROI */
+    /* if (static_cast<int>(contours.size()) >= contours_size_limit_) */
+    /* { */
+    /*   if (adaptive_debug_) */
+    /*   { */
+    /*     std::cout << "[UVDARLedDetectAdaptive]: NUMBER OF CONTOURS OUTSIDE OF THE LIMIT: " << contours.size() << std::endl; */
+    /*   } */
+
+    /*   lastProcessedBinaryROIs_.push_back(mask); */
+    /*   // Return empty roiDetectedPoints */
+    /*   std::vector<cv::Point> empty_roiDetectedPoints = {}; */
+    /*   thresholdValues_.push_back(thresholdValue_); */
+    /*   klDivergences_.push_back(0.0); */
+    /*   numberDetectedPoints_.push_back(0); */
+    /*   validRois_.push_back(0); */
+    /*   return empty_roiDetectedPoints; */
+    /* } */
 
     // TODO find proper value for MAX_AREA
     /* int MAX_AREA = 15; */
 
+    
+    //}
+    
+    double minCircularity = 0.45;
     for (const auto& contour : contours)
     {
       // Calculate the area of the contour
       double area = cv::contourArea(contour);
       // Filter based on area
-      if (area < contour_max_size_limit_)
-      {
-        if (adaptive_debug_)
-        {
-          std::cout << "[UVDARLedDetectAdaptive]: IN AREA: " << area << std::endl;
-        }
-        // Draw the contour on the mask
-        cv::drawContours(mask, std::vector<std::vector<cv::Point>>{contour}, -1, cv::Scalar(255), cv::FILLED);
-      } else if (adaptive_debug_)
-      {
-        std::cout << "[UVDARLedDetectAdaptive]: OUT OF AREA: " << area << std::endl;
+      if (area > contour_max_size_limit_) {
+        /* std::cout << "[UVDARLedDetectAdaptive]: CONTOUR OUTSIDE AREA: " << area << std::endl; */
+        continue;
       }
-    }
+      /* if (area < contour_max_size_limit_) */
+      /* { */
+      /* if (adaptive_debug_) */
+      /* { */
+      /*   std::cout << "[UVDARLedDetectAdaptive]: IN AREA: " << area << std::endl; */
+      /* } */
+      double perimeter = cv::arcLength(contour, true);
+      if (perimeter == 0)
+        continue;  // Avoid division by zero
 
+      double circularity = 4 * CV_PI * area / (perimeter * perimeter);
+      if (circularity < minCircularity)
+      {
+        /* std::cout << "[UVDARLedDetectAdaptive]: Not circle enough: " << circularity << std::endl; */
+        continue;  // Skip contours that are not circular enough
+      }
+      // Draw the contour on the mask
+      cv::drawContours(mask, std::vector<std::vector<cv::Point>>{contour}, -1, cv::Scalar(255), cv::FILLED);
+      /* } else if (adaptive_debug_) */
+      /* { */
+      /*   std::cout << "[UVDARLedDetectAdaptive]: OUT OF AREA: " << area << std::endl; */
+      /* } */
+    }
     // Apply the mask to the binary ROI
     binaryRoi &= mask;
-
+    /* saveRoiImage(binaryRoi, "binarizedMasked", index_); */
+    index_++;
     // Detect points within this ROI
     std::vector<cv::Point> roiDetectedPoints = detectPointsFromRoi(binaryRoi, roi);
 
@@ -428,9 +413,7 @@ namespace uvdar
       /* lastProcessedROIs_.push_back(roi);  // Store the ROI for visualization */
       /* // Store the binary ROI (For debugging/visualization) */
       /* lastProcessedBinaryROIs_.push_back(binaryRoi); */
-
       validRois_.push_back(1);
-
       return roiDetectedPoints;
     }
   }
