@@ -160,21 +160,15 @@ namespace uvdar
       grayImage = inputImage(roi).clone();
     }
 
-    /* saveRoiImage(grayImage, "grayImage", index_); */
-    /* // Apply Gaussian blur to the ROI */
-    cv::Mat lowFrequency;
-    /* cv::bilateralFilter(grayImage, blurred, 9, 75, 75); */
-    cv::GaussianBlur(grayImage, lowFrequency, cv::Size(0, 0), sigmaX_, sigmaY_);
-    cv::Mat highPass;
-    cv::subtract(grayImage, lowFrequency, highPass);
-
     /* minMax //{ */
     
     double minVal, maxVal;
     cv::minMaxLoc(grayImage, &minVal, &maxVal);
     if (maxVal < 40)
     {
-      /* std::cout << "[UVDARLedDetectAdaptive]: maxVal under :" << std::to_string(maxVal) << std::endl; */
+      if (adaptive_debug_) {
+        std::cout << "[UVDARLedDetectAdaptive]: maxVal under :" << std::to_string(maxVal) << std::endl;
+      }
       // Create a mask to draw the filtered contours */
       cv::Mat mask = cv::Mat::zeros(roi.size(), CV_8UC1);
 
@@ -192,52 +186,58 @@ namespace uvdar
 
     } else
     {
-      /* std::cout << "[UVDARLedDetectAdaptive]: maxVal :" << std::to_string(maxVal) << std::endl; */
+      if (adaptive_debug_) {
+        std::cout << "[UVDARLedDetectAdaptive]: maxVal :" << std::to_string(maxVal) << std::endl;
+      }
     }
     
     //}
+    
+    /* saveRoiImage(grayImage, "grayImage", index_); */
 
-    /* cv::medianBlur(highPass, highPass, 3);  // 3x3 median filter */
-    // Create unsharp mask by subtracting the blurred version from the original image
-    /* cv::Mat unsharpMask = grayImage - blurred; */
-    // Apply the unsharp mask to the original image to enhance edges
-    cv::Mat enhancedImage;
-    cv::addWeighted(grayImage, grayscale_ROI_weight_, highPass, sharped_ROI_weight_, 0, enhancedImage);
-    // A small kernel (e.g., 3x3) can clean up artifacts without over-smoothing.
-    cv::medianBlur(enhancedImage, enhancedImage, 3);
+    /* /1* Unsharping //{ *1/ */
+    
+    /* /1* // Apply Gaussian blur to the ROI *1/ */
+    /* cv::Mat lowFrequency; */
+    /* /1* cv::bilateralFilter(grayImage, blurred, 9, 75, 75); *1/ */
+    /* cv::GaussianBlur(grayImage, lowFrequency, cv::Size(0, 0), sigmaX_, sigmaY_); */
+    /* cv::Mat highPass; */
+    /* cv::subtract(grayImage, lowFrequency, highPass); */
 
+    /* /1* cv::medianBlur(highPass, highPass, 3);  // 3x3 median filter *1/ */
+    /* // Create unsharp mask by subtracting the blurred version from the original image */
+    /* /1* cv::Mat unsharpMask = grayImage - blurred; *1/ */
+    /* // Apply the unsharp mask to the original image to enhance edges */
+    /* cv::Mat enhancedImage; */
+    /* cv::addWeighted(grayImage, grayscale_ROI_weight_, highPass, sharped_ROI_weight_, 0, enhancedImage); */
+    /* // A small kernel (e.g., 3x3) can clean up artifacts without over-smoothing. */
+    /* cv::medianBlur(enhancedImage, enhancedImage, 3); */
+
+    
+    /* //} */
+    
     /* saveRoiImage(postDenoised, "enhancedImage", index_); */
     
     /* top-hat attempt //{ */
 
-    // Define the structuring element
-    // Adjust the size (e.g., 15x15) based on the expected size of your bright feature
-
     /* cv::medianBlur(grayImage, grayImage, 3);  // 3x3 median filter */
-    /* int kernelSize = 10; */
-    /* cv::Mat structElem = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(kernelSize, kernelSize)); */
+    double kernelSize = sigmaX_; 
+    cv::Mat structElem = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(kernelSize, kernelSize));
+    // Apply the white top-hat transform
+    cv::Mat topHat;
+    cv::morphologyEx(grayImage, topHat, cv::MORPH_TOPHAT, structElem);
+    cv::medianBlur(topHat, topHat, 3);  // 3x3 median filter
 
-    /* // Apply the white top-hat transform */
-    /* cv::Mat topHat; */
-    /* cv::morphologyEx(grayImage, topHat, cv::MORPH_TOPHAT, structElem); */
-
-
-    /* cv::medianBlur(topHat, topHat, 3);  // 3x3 median filter */
-
-    /* double minVal, maxVal; */
-    /* cv::minMaxLoc(topHat, &minVal, &maxVal); */
+    /* saveRoiImage(topHat, "topHat_15", index_); */
+    /* double tminVal, tmaxVal; */
+    /* cv::minMaxLoc(topHat, &tminVal, &tmaxVal); */
     /* cv::Mat contrastStretched; */
-    /* topHat.convertTo(contrastStretched, CV_8UC1, 255.0 / (maxVal - minVal), -minVal * 255.0 / (maxVal - minVal)); */
+    /* topHat.convertTo(contrastStretched, CV_8UC1, 255.0 / (tmaxVal - tminVal), -tminVal * 255.0 / (tmaxVal - tminVal)); */
 
     /* cv::Mat normalizedEnhanced; */
     /* cv::normalize(contrastStretched, normalizedEnhanced, 0, 255, cv::NORM_MINMAX); */
 
-    /* cv::Point point; */
-    /* point.x = roi.x; */
-    /* point.y = roi.y; */
-    /* saveRoiImage(normalizedEnhanced, point, index_, 0, 0); */
-    /* index_++; */
-    /* cv::Mat enhancedImage = contrastStretched; */
+    cv::Mat enhancedImage = topHat;
 
     //}
 
@@ -288,9 +288,6 @@ namespace uvdar
     // Create a mask to draw the filtered contours
     cv::Mat mask = cv::Mat::zeros(binaryRoi.size(), CV_8UC1);
 
-    lastProcessedROIs_.push_back(roi);  // Store the ROI for visualization
-    lastProcessedBinaryROIs_.push_back(binaryRoi);
-
     /* possible to delete filter based on area //{ */
     
     /* if (adaptive_debug_) */
@@ -323,6 +320,12 @@ namespace uvdar
     
     //}
     
+    if (adaptive_debug_)
+    {
+      // Print the contours size
+      std::cout << "[UVDARLedDetectAdaptive]: NUMBER OF CONTOURS: " << contours.size() << std::endl;
+    }
+
     double minCircularity = 0.45;
     for (const auto& contour : contours)
     {
@@ -330,7 +333,9 @@ namespace uvdar
       double area = cv::contourArea(contour);
       // Filter based on area
       if (area > contour_max_size_limit_) {
-        /* std::cout << "[UVDARLedDetectAdaptive]: CONTOUR OUTSIDE AREA: " << area << std::endl; */
+        if (adaptive_debug_) {
+          std::cout << "[UVDARLedDetectAdaptive]: CONTOUR OUTSIDE AREA: " << area << std::endl;
+        }
         continue;
       }
       /* if (area < contour_max_size_limit_) */
@@ -346,7 +351,9 @@ namespace uvdar
       double circularity = 4 * CV_PI * area / (perimeter * perimeter);
       if (circularity < minCircularity)
       {
-        /* std::cout << "[UVDARLedDetectAdaptive]: Not circle enough: " << circularity << std::endl; */
+        if (adaptive_debug_) {
+          std::cout << "[UVDARLedDetectAdaptive]: Not circle enough: " << circularity << std::endl;
+        }
         continue;  // Skip contours that are not circular enough
       }
       // Draw the contour on the mask
@@ -398,16 +405,17 @@ namespace uvdar
         klDivergences_.push_back(minKLDivergence_);
       }
 
+      cv::Mat empty_mask = cv::Mat::zeros(binaryRoi.size(), CV_8UC1);
+      lastProcessedROIs_.push_back(roi);  // Store the ROI for visualization
+      lastProcessedBinaryROIs_.push_back(empty_mask);
       validRois_.push_back(0);
       // Return empty roiDetectedPoints
       std::vector<cv::Point> empty_roiDetectedPoints = {};
-      // Clear the lastProcessedROIs_ and lastProcessedBinaryROIs_ vectors
-      /* lastProcessedROIs_.clear(); */
-      /* lastProcessedBinaryROIs_.clear(); */
-
       return empty_roiDetectedPoints;
     } else
     {
+      lastProcessedROIs_.push_back(roi);  // Store the ROI for visualization
+      lastProcessedBinaryROIs_.push_back(binaryRoi);
 
       /* // This is the reason it seems the visualization is blinking, getting some noisy rois in between and not being used */
       /* lastProcessedROIs_.push_back(roi);  // Store the ROI for visualization */

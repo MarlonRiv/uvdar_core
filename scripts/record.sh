@@ -23,6 +23,7 @@ exclude=(
  '(.*)image_raw(.*)'
 # Every topic containing "theora"
 '(.*)theora(.*)'
+'(.*)image(.*)'
 # Every topic containing "h264"
 '(.*)h264(.*)'
 )

@@ -10,7 +10,7 @@ windows:
   - launch:
       layout: even-vertical
       panes:
-        - waitForRos; roslaunch uvdar_core rosbag.launch uav_name:=uav36 use_4DHT:=false debug:=false
+        - waitForRos; roslaunch uvdar_core rosbag.launch uav_name:=uav36 use_4DHT:=false debug:=true
   # - kf:
       # layout: even-vertical
       # panes:
@@ -35,7 +35,7 @@ windows:
         # - waitForRos; sleep 3; rosbag play --clock ~/experiments/20_04/two_tx/two_tx/rx/occlusion_1/rx.bag
         # - waitForRos; sleep 3; rosbag play --clock ~/experiments/20_04/two_tx/two_tx/rx/occlusion_2/rx.bag
         # - waitForRos; rosbag play --clock ~/experiments/20_04/tumult/tumult/rx/rx.bag
-        - waitForRos; sleep 3; rosbag play --clock ~/bag_files/datasets_08_2024/uav36_rosbags_rx/marlon/69_2024_08_20_14_12_22variant1/_2024-08-20-14-14-09.bag
+        - waitForRos; sleep 3; rosbag play --clock ~/bag_files/datasets_08_2024/uav36_rosbags_rx/marlon/73_2024_08_20_15_04_11exp2_h0.785/_2024-08-20-15-06-28.bag
   - blinkers-seen:
       layout: even-vertical
       panes:

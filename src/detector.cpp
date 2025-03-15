@@ -566,7 +566,7 @@ private:
 
       if( _adaptive_threshold_ && trackingPointsPerCamera_[image_index].size() > 0){
       
-      /* ROS_INFO_STREAM("[UVDARDetector]: Tracking points per camera: " << trackingPointsPerCamera_[image_index].size()); */ 
+      ROS_INFO_STREAM("[UVDARDetector]: Tracking points per camera: " << trackingPointsPerCamera_[image_index].size()); 
 
       
       /* { */
@@ -592,7 +592,9 @@ private:
       }
       else{
 
-       adaptive_detected_points_[image_index].clear(); 
+       if (_adaptive_threshold_) {
+         adaptive_detected_points_[image_index].clear(); 
+       }
        /* ROS_INFO_STREAM("[UVDARDetector]: Processing with standard detection " << image_index); */
 
        /* ROS_INFO_STREAM("[UVDARDetector]: Locking cam image mutex " << image_index << "..."); */
@@ -659,26 +661,26 @@ private:
     if (initialized_){
         cv::Mat visualization_image;
 
-        if (_adaptive_threshold_) {
-        int image_index = 0;
-        std::scoped_lock lock(mutex_camera_image_);
-        cv::Mat white_background = cv::Mat::ones(images_current_[image_index].size(), images_current_[image_index].type()) * 255;
-        uvda_[image_index]->generateVisualizationAdaptive(images_current_[image_index], visualization_image, adaptive_detected_points_[image_index]);
-        publishVisualizationImage(visualization_image); 
-        }
+        /* if (_adaptive_threshold_) { */
+        /* int image_index = 0; */
+        /* std::scoped_lock lock(mutex_camera_image_); */
+        /* cv::Mat white_background = cv::Mat::ones(images_current_[image_index].size(), images_current_[image_index].type()) * 255; */
+        /* uvda_[image_index]->generateVisualizationAdaptive(images_current_[image_index], visualization_image, adaptive_detected_points_[image_index]); */
+        /* publishVisualizationImage(visualization_image); */ 
+        /* } */
 
       //TODO check why its crashing when including the standard generateVisualization
-      /* generateVisualization(image_visualization_); */
-      /* if ((image_visualization_.cols != 0) && (image_visualization_.rows != 0)){ */
-      /*   if (_publish_visualization_){ */
-      /*     ROS_INFO_STREAM("[UVDARDetector]: Publishing visualization."); */
-      /*     pub_visualization_->publish("uvdar_detection_visualization", 0.01, image_visualization_, true); */
-      /*   } */
-      /*   if (_gui_){ */
-      /*     cv::imshow("ocv_uvdar_detection_" + _uav_name_, image_visualization_); */
-      /*     cv::waitKey(25); */
-      /*   } */
-      /* } */
+      generateVisualization(image_visualization_);
+      if ((image_visualization_.cols != 0) && (image_visualization_.rows != 0)){
+        if (_publish_visualization_){
+          ROS_INFO_STREAM("[UVDARDetector]: Publishing visualization.");
+          pub_visualization_->publish("uvdar_detection_visualization", 0.01, image_visualization_, true);
+        }
+        if (_gui_){
+          cv::imshow("ocv_uvdar_detection_" + _uav_name_, image_visualization_);
+          cv::waitKey(25);
+        }
+      }
     }
   }
   //}

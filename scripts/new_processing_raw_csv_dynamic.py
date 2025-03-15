@@ -7,16 +7,24 @@ import argparse
 # Parse command-line arguments
 parser = argparse.ArgumentParser(description='Process CSV data')
 parser.add_argument('--name_experiment', type=str, required=True, help='Name of the experiment (without .csv)')
-# parser.add_argument('--variant', type=int, required=True, help='Variant number (e.g., 1, 2, or 3)')
+parser.add_argument('--processed_csv_dir', type=str, required=True, help='processed csv directory')
+parser.add_argument('--raw_csv_dir', type=str, required=True, help='raw csv directory')
+
 args = parser.parse_args()
 
-# Experiment name and variant
+# Experiment name 
 name_experiment = args.name_experiment  # e.g., 'variant1_th40'
-# variant = args.variant  # e.g., 1
+raw_csv_dir = args.raw_csv_dir
+processed_csv_dir = args.processed_csv_dir
 
 # Paths
-input_csv_path = os.path.expanduser('~/Desktop/MRS_Master_Project/paper/dynamic_raw_csv/' + name_experiment + '.csv')
-cleaned_file_path = os.path.expanduser('~/Desktop/MRS_Master_Project/paper/processed_csv_automation_dynamic/' + name_experiment + '_processed.csv')
+input_csv_path = os.path.expanduser(raw_csv_dir + name_experiment + '.csv')
+cleaned_file_path = processed_csv_dir
+cleaned_file_path = os.path.expanduser(processed_csv_dir + name_experiment + '_processed.csv')
+
+# Paths
+# input_csv_path = os.path.expanduser('~/Desktop/MRS_Master_Project/paper/dynamic_raw_csv/' + name_experiment + '.csv')
+# cleaned_file_path = os.path.expanduser('~/Desktop/MRS_Master_Project/paper/processed_csv_automation_dynamic/' + name_experiment + '_processed.csv')
 
 # Read data
 data = pd.read_csv(input_csv_path)
